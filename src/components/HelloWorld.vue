@@ -1,5 +1,7 @@
 <template>
   <canvas ref="can" width="600" height="600"></canvas>
+  <button @click="listaPoligonos">Lista Poligonos</button>
+  <button @click="reiniciaPoligono">Reinicia Poligono</button>
 </template>
 
 <script>
@@ -9,9 +11,12 @@ export default {
   data(){
     return {
       canvas: null,
-      desenhandoLinha: false,
-      desenhando: null,
-      desenhandoPoints: [],
+      desenhando: {
+        poligono: null,
+        linha: null,
+        linhas: [],
+        pontos: []
+      },
       objetos: [],
       ultimaRef: -1,
       modo: 1, //0 - nada, 1 - segmentacao, 2 - bbox
@@ -21,16 +26,14 @@ export default {
     const ref = this.$refs.can;
     this.canvas = new fabric.Canvas(ref);
     this.canvas.on('mouse:wheel', this.zoomScroll);
-    this.canvas.on('object:moving', this.moveMove);
+    this.canvas.on('object:moving', this.moveObject);
     this.canvas.on('mouse:down', this.mouseDown);
     this.canvas.on('mouse:move', this.mouseMove);
     this.inicia("http://fabricjs.com/assets/escheresque_ste.png");
-    // this.poligono();
   },
   
   methods: {
     zoomScroll(opt){
-      console.log("zoomScroll chamado");
       let delta = opt.e.deltaY;
       let zoom = this.canvas.getZoom();
       zoom *= 0.999 ** delta;
@@ -40,56 +43,116 @@ export default {
       opt.e.preventDefault();
       opt.e.stopPropagation();
     },
-    moveMove(event){
-      console.log("moveobject chamado");
+
+    moveObject(event){
+      //
     },
-    mouseMove(event) {
-      if(this.desenhandoLinha){
-        let pontoAtual = event.absolutePointer;
+
+    mouseMove(event){
+      if(this.desenhando.linha && this.desenhando.linha.class == "line"){
+        var pointer = this.canvas.getPointer(event.e);
+        this.desenhando.linha.set({ x2: pointer.x, y2: pointer.y });
+        this.canvas.renderAll();
+        //desenha rastro linha
       }
     },
+
     mouseDown(event){
-      console.log("mouseDown chamado");
-      let pontoAtual = event.absolutePointer;
-      if(this.modo == 1){
-        this.desenhandoPoints.push(pontoAtual);
-        let circle = new fabric.Circle({
-          radius: 5,
-          fill: '#ffffff',
-          stroke: '#333333',
-          strokeWidth: 0.5,
-          left: (pontoAtual.x/this.canvas.getZoom()),
-          top: (pontoAtual.y/this.canvas.getZoom()),
-          selectable: false,
-          hasBorders: false,
-          hasControls: false,
-          originX:'center',
-          originY:'center',
-          id:"er",
-          objectCaching:false
-        });
-        this.canvas.add(circle);
-
-
-        if (this.desenhandoPoints.length != 1){
-          this.desenhandoLinha = true;
-          if (this.desenhando == null){
-            this.desenhando = new fabric.Polygon(this.desenhandoPoints, {
-            fill: '#D81B60',
-            strokeWidth: 1,
-            stroke: 'green',
-            id: "!erwq",
-            objectCaching: false,
-            selectable: false,
-            hoverCursor:'dafaul',
-            transparentCorners: false,
-            });
-            this.canvas.add(this.desenhando);
-          }
-          
-        }
+      if(event.target && this.desenhando.pontos[0].id == event.target.id){
+        this.desenhaPoligono();
+      }
+      else if(this.modo == 1){
+        this.adicionaPonto(event);
       }
     },
+
+    //PRONTO
+    adicionaPonto(event){
+      let pontoAtual = event.absolutePointer;
+
+      //adiciona um circulo na posicao clicada
+      //gero um id unico pro ponto
+      var random = Math.floor(Math.random() * (999999 - 99 + 1)) + 99;
+      var id = new Date().getTime() + random;
+      
+      var circle = new fabric.Circle({
+        radius: 3,
+        fill: '#ffffff',
+        stroke: '#333333',
+        strokeWidth: 0.5,
+        left: (pontoAtual.x / this.canvas.getZoom()),
+        top: (pontoAtual.y / this.canvas.getZoom()),
+        selectable: false,
+        hasBorders: false,
+        hasControls: false,
+        originX: 'center',
+        originY: 'center',
+        id: id,
+        objectCaching: false
+      });
+      //verifico se e o primeiro ponto, e se for mudo a cor
+      if (this.desenhando.pontos.length == 0) {
+        circle.set({
+            fill: 'red'
+        })
+      }
+      this.desenhando.pontos.push(circle);
+      this.canvas.add(circle);
+
+      //cria a linha de rastro
+      var points = [(event.e.layerX / this.canvas.getZoom()), (event.e.layerY / this.canvas.getZoom()), (event.e.layerX / this.canvas.getZoom()), (event.e.layerY / this.canvas.getZoom())];
+      let line = new fabric.Line(points, {
+            strokeWidth: 2,
+            fill: '#999999',
+            stroke: '#999999',
+            class: 'line',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            hasBorders: false,
+            hasControls: false,
+            evented: false,
+            objectCaching: false
+        });
+      this.desenhando.linha = line;
+      this.desenhando.linhas.push(line);
+      this.canvas.add(line);
+    },
+
+    desenhaPoligono(){
+      var pontosTemp = [];
+
+      //pego uma lista de coordenadas dos pontos, e apago os circulos
+      this.desenhando.pontos.forEach((point,index) => {
+        pontosTemp.push({
+          x: point.left,
+          y: point.top
+        });
+        this.canvas.remove(point);
+      });
+      //apago as linhas desenhadas
+      this.desenhando.linhas.forEach((linha,index) => {
+        this.canvas.remove(linha);
+      })
+      //desenho o poligo final
+      this.ultimaRef++;
+      var polygon = new fabric.Polygon(pontosTemp, {
+            stroke: '#333333',
+            strokeWidth: 0.5,
+            fill: 'red',
+            opacity: 0.1,
+            hasBorders: false,
+            hasControls: false,
+            id: this.ultimaRef,
+        });
+      this.canvas.add(polygon);
+      this.objetos.push(polygon);
+      this.modo=0;
+    },
+
+
+
+    //VERIFICAR
     inicia(image){
       this.canvas.setBackgroundColor({
         source: image,
@@ -100,22 +163,20 @@ export default {
       this.canvas.renderAll.bind( this.canvas));
     },
 
-    poligono(){
-      let points = [{x: 3, y: 4}, {x: 16, y: 3}, {x: 30, y: 5},  {x: 25, y: 55}, {x: 19, y: 44}, {x: 15, y: 30}, {x: 15, y: 55}, {x: 9, y: 55}, {x: 6, y: 53}, {x: -2, y: 55}, {x: -4, y: 40}, {x: 0, y: 20}]
-      let polygon = new fabric.Polygon(points, {
-        fill: '#D81B60',
-        strokeWidth: 1,
-        stroke: 'green',
-        scaleX: 4,
-        scaleY: 4,
-        id: "!erwq",
-        objectCaching: false,
-        selectable: false,
-        hoverCursor:'dafaul',
-        transparentCorners: false,
-      });
-      this.canvas.add(polygon);
+    //DEBUG
+    listaPoligonos(){
+      console.log("lista poligonos",this.objetos);
+      console.log("ultimaRef",this.ultimaRef);
     },
+    reiniciaPoligono(){
+      this.desenhando = {
+        poligono: null,
+        linha: null,
+        linhas: [],
+        pontos: []
+      };
+      this.modo = 1;
+    }
   },
 };
 
