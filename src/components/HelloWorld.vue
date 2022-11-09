@@ -47,9 +47,8 @@ export default {
       opt.e.stopPropagation();
     },
     moveObject(event){
-      var objType = event.target.get('type');
       var p = event.target;
-      this.objetos[0].points[p.id] = {x: p.getCenterPoint().x, y: p.getCenterPoint().y};
+      this.objetos[0].points[p.id] = {x: p.getCenterPoint().x/ this.canvas.getZoom(), y: p.getCenterPoint().y/ this.canvas.getZoom()};
     },
     mouseMove(event){
       if(this.desenhando.linha && this.desenhando.linha.class == "line"){
@@ -176,8 +175,6 @@ export default {
       this.modo = 1;
     },
     EditaPoligono(){
-      console.log("edita",this.objetos[0].points)
-
       this.objetos[0].points.forEach((element, index) => {
         var circle = new fabric.Circle({
           radius: 3,
