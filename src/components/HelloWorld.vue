@@ -2,6 +2,7 @@
   <canvas ref="can" width="600" height="600"></canvas>
   <button @click="listaPoligonos">Lista Poligonos</button>
   <button @click="reiniciaPoligono">Reinicia Poligono</button>
+  <button @click="EditaPoligono">Edita</button>
 </template>
 
 <script>
@@ -43,11 +44,9 @@ export default {
       opt.e.preventDefault();
       opt.e.stopPropagation();
     },
-
     moveObject(event){
       //
     },
-
     mouseMove(event){
       if(this.desenhando.linha && this.desenhando.linha.class == "line"){
         var pointer = this.canvas.getPointer(event.e);
@@ -56,7 +55,6 @@ export default {
         //desenha rastro linha
       }
     },
-
     mouseDown(event){
       if(event.target && this.desenhando.pontos[0].id == event.target.id){
         this.desenhaPoligono();
@@ -65,7 +63,6 @@ export default {
         this.adicionaPonto(event);
       }
     },
-
     //PRONTO
     adicionaPonto(event){
       let pontoAtual = event.absolutePointer;
@@ -144,14 +141,12 @@ export default {
             hasBorders: false,
             hasControls: false,
             id: this.ultimaRef,
+            selectable: false,
         });
       this.canvas.add(polygon);
       this.objetos.push(polygon);
       this.modo=0;
     },
-
-
-
     //VERIFICAR
     inicia(image){
       this.canvas.setBackgroundColor({
@@ -162,6 +157,8 @@ export default {
       }, 
       this.canvas.renderAll.bind( this.canvas));
     },
+
+
 
     //DEBUG
     listaPoligonos(){
@@ -176,7 +173,96 @@ export default {
         pontos: []
       };
       this.modo = 1;
-    }
+    },
+    EditaPoligono(){
+      var circulosTemp = [];
+      console.log("edita",this.objetos[0].points)
+
+      var random = Math.floor(Math.random() * (999999 - 99 + 1)) + 99;
+      var id = new Date().getTime() + random;
+      this.objetos[0].points.forEach((element, index) => {
+        var circle = new fabric.Circle({
+          radius: 3,
+          fill: '#ffffff',
+          stroke: '#333333',
+          strokeWidth: 0.5,
+          left: (element.x / this.canvas.getZoom()),
+          top: (element.y / this.canvas.getZoom()),
+          hasBorders: false,
+          hasControls: false,
+          originX: 'center',
+          originY: 'center',
+          id: id,
+          objectCaching: false
+        });
+        this.canvas.add(circle);
+        circulosTemp.push(circle);
+      });
+      var lastControl = this.objetos[0].points.length - 1;
+      this.objetos[0].points.reduce(function (acc, point, index) {
+				acc['p' + index] = new fabric.Control({
+					positionHandler: this.polygonPositionHandler,
+					actionHandler: this.anchorWrapper(index > 0 ? index - 1 : lastControl, this.actionHandler),
+					actionName: 'modifyPolygon',
+					pointIndex: index
+				});
+				return acc;
+			}
+			, {});
+      console.log("polly controls",this.objetos[0].controls)
+      this.canvas.requestRenderAll();
+    },
+    anchorWrapper(anchorIndex, fn) {
+      console.log("anchorWrapper");
+      return function (eventData, transform, x, y) {
+        var fabricObject = transform.target,
+        absolutePoint = fabric.util.transformPoint({
+          x: (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x),
+          y: (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y),
+        }, fabricObject.calcTransformMatrix()),
+        actionPerformed = fn(eventData, transform, x, y),
+        newDim = fabricObject._setPositionDimensions({}),
+        polygonBaseSize = this.getObjectSizeWithStroke(fabricObject),
+        newX = (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x) / polygonBaseSize.x,
+        newY = (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y) / polygonBaseSize.y;
+        fabricObject.setPositionByOrigin(absolutePoint, newX + 0.5, newY + 0.5);
+        return actionPerformed;
+      }
+    },
+    
+    polygonPositionHandler(dim, finalMatrix, fabricObject) {
+      console.log("polygonPositionHandler");
+      var x = (fabricObject.points[this.pointIndex].x - fabricObject.pathOffset.x),
+      y = (fabricObject.points[this.pointIndex].y - fabricObject.pathOffset.y);
+      return fabric.util.transformPoint({ x: x, y: y },
+      fabric.util.multiplyTransformMatrices(
+        fabricObject.canvas.viewportTransform,
+        fabricObject.calcTransformMatrix()
+      ));
+    }, 
+
+    actionHandler(eventData, transform, x, y) {
+      console.log("actionHandler");
+      var polygon = transform.target,
+      currentControl = polygon.controls[polygon.__corner],
+      mouseLocalPosition = polygon.toLocalPoint(new fabric.Point(x, y), 'center', 'center'),
+      polygonBaseSize = this.getObjectSizeWithStroke(polygon),
+      size = polygon._getTransformedDimensions(0, 0),
+      finalPointPosition = {
+        x: mouseLocalPosition.x * polygonBaseSize.x / size.x + polygon.pathOffset.x,
+        y: mouseLocalPosition.y * polygonBaseSize.y / size.y + polygon.pathOffset.y
+      };
+      polygon.points[currentControl.pointIndex] = finalPointPosition;
+      return true;
+    },
+    getObjectSizeWithStroke(object) {
+      var stroke = new fabric.Point(
+        object.strokeUniform ? 1 / object.scaleX : 1,
+        object.strokeUniform ? 1 / object.scaleY : 1
+      ).multiply(object.strokeWidth);
+      return new fabric.Point(object.width + stroke.x, object.height + stroke.y);
+    },
+
   },
 };
 
