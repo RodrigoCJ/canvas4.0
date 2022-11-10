@@ -1,9 +1,9 @@
 <template>
   <canvas ref="can" width="640" height="480"></canvas>
-  <button @click="listaPoligonos">Lista Objetos</button>
-  <button @click="reiniciaPoligono">Novo Poligono</button>
-  <button @click="reiniciaQuadrado">Novo Quadrado</button>
-  <button @click="editaPoligono">Edita</button>
+  <button @click="listaDados">Lista Objetos</button>
+  <button @click="adicionaPoligono">Novo Poligono</button>
+  <button @click="adicionaQuadrado">Novo Quadrado</button>
+  <button @click="editaObjeto">Edita</button>
   <button @click="paraEdicao">Para Edicao</button>
   <button >Destaca</button>
   <button >Oculta/Desoculta</button>
@@ -166,13 +166,13 @@ export default {
       this.canvas.renderAll.bind( this.canvas));
     },
     //DEBUG
-    listaPoligonos(){
+    listaDados(){
       this.canvas.setZoom(1);
       console.log("lista poligonos",this.objetos);
       console.log("ultimaRef",this.ultimaRef);
       console.log("zoom",this.canvas.getZoom());
     },
-    reiniciaPoligono(){
+    adicionaPoligono(){
       this.desenhando = {
         poligono: null,
         linha: null,
@@ -181,8 +181,9 @@ export default {
       };
       this.modo = 1;
     },
-    editaPoligono(){
-      this.objetos[0].points.forEach((element, index) => {
+    editaObjeto(){
+      let objeto = this.objeto[parseInt(this.message)]
+      objeto.points.forEach((element, index) => {
         var circle = new fabric.Circle({
           radius: 3,
           fill: '#ffffff',
