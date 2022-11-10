@@ -1,9 +1,14 @@
 <template>
-  <canvas ref="can" width="600" height="600"></canvas>
-  <button @click="listaPoligonos">Lista Poligonos</button>
-  <button @click="reiniciaPoligono">Reinicia Poligono</button>
-  <button @click="EditaPoligono">Edita</button>
+  <canvas ref="can" width="640" height="480"></canvas>
+  <button @click="listaPoligonos">Lista Objetos</button>
+  <button @click="reiniciaPoligono">Novo Poligono</button>
+  <button @click="reiniciaQuadrado">Novo Quadrado</button>
+  <button @click="editaPoligono">Edita</button>
   <button @click="paraEdicao">Para Edicao</button>
+  <button >Destaca</button>
+  <button >Oculta/Desoculta</button>
+  <button >Apaga</button>
+  <input v-model="message"/>
 </template>
 
 <script>
@@ -13,6 +18,7 @@ export default {
   data(){
     return {
       canvas: null,
+      message:"",
       desenhando: {
         poligono: null,
         linha: null,
@@ -32,7 +38,7 @@ export default {
     this.canvas.on('object:moving', this.moveObject);
     this.canvas.on('mouse:down', this.mouseDown);
     this.canvas.on('mouse:move', this.mouseMove);
-    this.inicia("http://fabricjs.com/assets/escheresque_ste.png");
+    this.inicia("https://media.discordapp.net/attachments/947876906185924648/1040255879435526204/7007_1667849369020.jpg");
   },
   
   methods: {
@@ -40,7 +46,7 @@ export default {
       let delta = opt.e.deltaY;
       let zoom = this.canvas.getZoom();
       zoom *= 0.999 ** delta;
-      if (zoom > 20) zoom = 20;
+      if (zoom > 15) zoom = 15;
       if (zoom < 1) zoom = 1;
       this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
       opt.e.preventDefault();
@@ -154,14 +160,14 @@ export default {
     inicia(image){
       this.canvas.setBackgroundColor({
         source: image,
-        repeat: 'repeat',
-        offsetX: 600,
-        offsetY: 600
+        offsetX: 640,
+        offsetY: 480
       }, 
       this.canvas.renderAll.bind( this.canvas));
     },
     //DEBUG
     listaPoligonos(){
+      this.canvas.setZoom(1);
       console.log("lista poligonos",this.objetos);
       console.log("ultimaRef",this.ultimaRef);
       console.log("zoom",this.canvas.getZoom());
@@ -175,7 +181,7 @@ export default {
       };
       this.modo = 1;
     },
-    EditaPoligono(){
+    editaPoligono(){
       this.objetos[0].points.forEach((element, index) => {
         var circle = new fabric.Circle({
           radius: 3,
