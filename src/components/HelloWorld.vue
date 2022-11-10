@@ -41,19 +41,18 @@ export default {
       let zoom = this.canvas.getZoom();
       zoom *= 0.999 ** delta;
       if (zoom > 20) zoom = 20;
-      if (zoom < 0.01) zoom = 0.01;
+      if (zoom < 1) zoom = 1;
       this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
       opt.e.preventDefault();
       opt.e.stopPropagation();
     },
     moveObject(event){
       var p = event.target;
-      this.objetos[0].points[p.id] = {x: p.getCenterPoint().x/ this.canvas.getZoom(), y: p.getCenterPoint().y/ this.canvas.getZoom()};
+      this.objetos[0].points[p.id] = {x: p.getCenterPoint().x, y: p.getCenterPoint().y};
     },
     mouseMove(event){
       if(this.desenhando.linha && this.desenhando.linha.class == "line"){
-        var pointer = this.canvas.getPointer(event.e);
-        this.desenhando.linha.set({ x2: pointer.x, y2: pointer.y });
+        this.desenhando.linha.set({ x2: event.absolutePointer.x, y2: event.absolutePointer.y});
         this.canvas.renderAll();
         //desenha rastro linha
       }
@@ -69,6 +68,7 @@ export default {
     //PRONTO
     adicionaPonto(event){
       let pontoAtual = event.absolutePointer;
+      console.log("get point",pontoAtual)
 
       //adiciona um circulo na posicao clicada
       //gero um id unico pro ponto
@@ -80,8 +80,8 @@ export default {
         fill: '#ffffff',
         stroke: '#333333',
         strokeWidth: 0.5,
-        left: (pontoAtual.x / this.canvas.getZoom()),
-        top: (pontoAtual.y / this.canvas.getZoom()),
+        left: (pontoAtual.x),
+        top: (pontoAtual.y),
         selectable: false,
         hasBorders: false,
         hasControls: false,
@@ -100,7 +100,7 @@ export default {
       this.canvas.add(circle);
 
       //cria a linha de rastro
-      var points = [(event.e.layerX / this.canvas.getZoom()), (event.e.layerY / this.canvas.getZoom()), (event.e.layerX / this.canvas.getZoom()), (event.e.layerY / this.canvas.getZoom())];
+      var points = [(pontoAtual.x), (pontoAtual.y), (pontoAtual.x), (pontoAtual.y)];
       let line = new fabric.Line(points, {
             strokeWidth: 2,
             fill: '#999999',
@@ -164,6 +164,7 @@ export default {
     listaPoligonos(){
       console.log("lista poligonos",this.objetos);
       console.log("ultimaRef",this.ultimaRef);
+      console.log("zoom",this.canvas.getZoom());
     },
     reiniciaPoligono(){
       this.desenhando = {
@@ -181,8 +182,8 @@ export default {
           fill: '#ffffff',
           stroke: '#333333',
           strokeWidth: 0.5,
-          left: (element.x / this.canvas.getZoom()),
-          top: (element.y / this.canvas.getZoom()),
+          left: (element.x),
+          top: (element.y),
           hasBorders: false,
           hasControls: false,
           originX: 'center',
