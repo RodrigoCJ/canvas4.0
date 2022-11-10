@@ -18,7 +18,7 @@ export default {
   data(){
     return {
       canvas: null,
-      message:"",
+      message:"0",
       desenhando: {
         poligono: null,
         linha: null,
@@ -28,17 +28,19 @@ export default {
       objetos: [],
       ultimaRef: -1,
       edicaoCirculos: [],
-      modo: 1, //0 - nada, 1 - segmentacao, 2 - bbox
+      modo: 0, //0 - nada, 1 - segmentacao, 2 - bbox
     }
   },
   mounted() {
     const ref = this.$refs.can;
     this.canvas = new fabric.Canvas(ref);
+    this.canvas.selection = false;
     this.canvas.on('mouse:wheel', this.zoomScroll);
     this.canvas.on('object:moving', this.moveObject);
     this.canvas.on('mouse:down', this.mouseDown);
+    this.canvas.on('mouse:up', this.mouseUp);
     this.canvas.on('mouse:move', this.mouseMove);
-    this.inicia("https://media.discordapp.net/attachments/947876906185924648/1040255879435526204/7007_1667849369020.jpg");
+    this.inicia("https://media.discordapp.net/attachments/905770077251600396/1040329314241101904/black_640x480.png");
   },
   
   methods: {
@@ -57,10 +59,15 @@ export default {
       this.objetos[0].points[p.id] = {x: p.getCenterPoint().x, y: p.getCenterPoint().y};
     },
     mouseMove(event){
-      if(this.desenhando.linha && this.desenhando.linha.class == "line"){
+      if(this.desenhando.linha && this.desenhando.linha.class == "line" && this.modo == 1){
         this.desenhando.linha.set({ x2: event.absolutePointer.x, y2: event.absolutePointer.y});
         this.canvas.renderAll();
         //desenha rastro linha
+      }
+      else if (this.modo == 2 && this.desenhando.poligono){
+        this.desenhando.poligono.set({ width: (this.desenhando.poligono.left - event.absolutePointer.x) *-1 });
+        this.desenhando.poligono.set({ height: (this.desenhando.poligono.top - event.absolutePointer.y) *-1});
+        this.canvas.renderAll();
       }
     },
     mouseDown(event){
@@ -70,11 +77,18 @@ export default {
       else if(this.modo == 1){
         this.adicionaPonto(event);
       }
+      else if( this.modo == 2){
+        this.comecaQuadrado(event);
+      }
+    },
+    mouseUp(event){
+      if(this.modo == 2){
+        this.fechaQuadrado(event);
+      }
     },
     //PRONTO
     adicionaPonto(event){
       let pontoAtual = event.absolutePointer;
-      console.log("get point",pontoAtual)
 
       //adiciona um circulo na posicao clicada
       //gero um id unico pro ponto
@@ -156,6 +170,61 @@ export default {
       this.objetos.push(polygon);
       this.modo=0;
     },
+
+    comecaQuadrado(event){
+      let pontoAtual = event.absolutePointer;
+
+      //adiciona um circulo na posicao clicada
+      //gero um id unico pro ponto
+      var random = Math.floor(Math.random() * (999999 - 99 + 1)) + 99;
+      var id = new Date().getTime() + random;
+      
+      var circle = new fabric.Circle({
+        radius: 3,
+        fill: 'red',
+        stroke: '#333333',
+        strokeWidth: 0.5,
+        left: (pontoAtual.x),
+        top: (pontoAtual.y),
+        selectable: false,
+        hasBorders: false,
+        hasControls: false,
+        originX: 'center',
+        originY: 'center',
+        id: id,
+        objectCaching: false
+      });
+      this.desenhando.pontos.push(circle);
+      this.canvas.add(circle);
+
+
+      this.ultimaRef++;
+      var rect = new fabric.Rect({
+        left: pontoAtual.x,
+        top: pontoAtual.y,
+        stroke: '#333333',
+        strokeWidth: 0.5,
+        fill: 'white',
+        opacity: 0.2,
+        selectable: false,
+            objectCaching: false,
+      });
+
+      this.desenhando.poligono = rect;
+      this.canvas.add(rect);
+      
+    },
+
+    fechaQuadrado(event){
+      let pontoAtual = event.absolutePointer;
+      this.desenhando.poligono.set({ width: (this.desenhando.poligono.left - pontoAtual.x)*-1  });
+      this.desenhando.poligono.set({ height: (this.desenhando.poligono.top - pontoAtual.y)*-1  });
+      this.canvas.renderAll();
+      this.canvas.remove(this.desenhando.pontos[0]);
+      this.objetos.push(this.desenhando.poligono);
+      this.modo = 0
+    },
+
     //VERIFICAR
     inicia(image){
       this.canvas.setBackgroundColor({
@@ -181,26 +250,73 @@ export default {
       };
       this.modo = 1;
     },
+    adicionaQuadrado(){
+      this.desenhando = {
+        poligono: null,
+        linha: null,
+        linhas: [],
+        pontos: []
+      };
+      this.modo = 2;
+    },
     editaObjeto(){
-      let objeto = this.objeto[parseInt(this.message)]
-      objeto.points.forEach((element, index) => {
-        var circle = new fabric.Circle({
+      this.edicaoCirculos=[];
+      let objeto = this.objetos[parseInt(this.message)]
+      console.log("objeto type",objeto.type)
+      if (objeto.type == "polygon"){
+        objeto.points.forEach((element, index) => {
+          var circle = new fabric.Circle({
+            radius: 3,
+            fill: '#ffffff',
+            stroke: '#333333',
+            strokeWidth: 0.5,
+            left: (this.desenhando.poligono.left),
+            top: (this.desenhando.poligono.top),
+            hasBorders: false,
+            hasControls: false,
+            originX: 'center',
+            originY: 'center',
+            id: index,
+            objectCaching: false
+          });
+          this.canvas.add(circle);
+          this.edicaoCirculos.push(circle);
+        });
+      }
+      else if(objeto.type == "rect"){
+        var circleIni = new fabric.Circle({
           radius: 3,
           fill: '#ffffff',
           stroke: '#333333',
           strokeWidth: 0.5,
-          left: (element.x),
-          top: (element.y),
+          left: (this.desenhando.poligono.left),
+          top: (this.desenhando.poligono.top),
           hasBorders: false,
           hasControls: false,
           originX: 'center',
           originY: 'center',
-          id: index,
+          id: 0,
           objectCaching: false
         });
-        this.canvas.add(circle);
-        this.edicaoCirculos.push(circle);
-      });
+        this.canvas.add(circleIni);
+        this.edicaoCirculos.push(circleIni);
+        var circleFim = new fabric.Circle({
+          radius: 3,
+          fill: '#ffffff',
+          stroke: '#333333',
+          strokeWidth: 0.5,
+          left: (this.desenhando.poligono.left + this.desenhando.poligono.width),
+          top: (this.desenhando.poligono.top + this.desenhando.poligono.height),
+          hasBorders: false,
+          hasControls: false,
+          originX: 'center',
+          originY: 'center',
+          id: 0,
+          objectCaching: false
+        });
+        this.canvas.add(circleFim);
+        this.edicaoCirculos.push(circleFim);        
+      }
     },
     paraEdicao(){
       this.edicaoCirculos.forEach((point,index) => {
