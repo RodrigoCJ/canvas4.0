@@ -61,6 +61,7 @@ export default {
       textos: [],
       ultimaRef: -1,
       edicaoCirculos: [],
+      pontosIntermendiarios: [],
       imgWidth: 640,
       imgHeight: 480,
       modo: 0, //0 - nada, 1 - segmentacao, 2 - bbox
@@ -431,8 +432,14 @@ export default {
           });
           this.canvas.add(circle);
           this.edicaoCirculos.push(circle);
+
+          this.criaPontoInter(objeto);
+          
+
+
         });
-      } else if (objeto.type == "rect") {
+      } 
+      else if (objeto.type == "rect") {
         var circleIni = new fabric.Circle({
           radius: 3,
           fill: this.parametros.corPreenchimento,
@@ -467,11 +474,52 @@ export default {
         this.edicaoCirculos.push(circleFim);
       }
     },
+    criaPontoInter(objeto){
+      if (objeto.type == "polygon") {
+        this.pontosIntermendiarios.forEach((element, index) => {
+          this.canvas.remove(element);
+        });
+        console.log("objeto",objeto.points)
+        this.pontosIntermendiarios = [];
+        objeto.points.forEach((element, index) => {
+          let atual = objeto.points[index]
+          let prox = objeto.points[index == objeto.points.length-1 ? 0 : index+1]
+          let medio = { x: (parseInt(atual.x) + parseInt(prox.x))/2, y: (parseInt(atual.y) + parseInt(prox.y))/2 }
+
+          console.log("atual",atual)
+          console.log("prox",prox)
+          console.log("medio",medio)
+
+          var circle = new fabric.Circle({
+            radius: 3,
+            fill: 'blue',
+            stroke: 'blue',
+            strokeWidth: 3,
+            left: medio.x,
+            top: medio.y,
+            hasBorders: false,
+            hasControls: false,
+            originX: "center",
+            originY: "center",
+            id: 'i'+index,
+            objectCaching: false,
+          });
+          this.canvas.add(circle);
+          this.pontosIntermendiarios.push(circle);
+
+        });
+      }
+    },
+
     paraEdicao() {
       this.edicaoCirculos.forEach((point, index) => {
         this.canvas.remove(point);
       });
       this.edicaoCirculos = [];
+      this.pontosIntermendiarios.forEach((point, index) => {
+        this.canvas.remove(point);
+      });
+      this.pontosIntermendiarios = [];
     },
     apaga() {
       let forma = parseInt(this.message);
