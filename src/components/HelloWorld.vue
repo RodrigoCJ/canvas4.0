@@ -10,22 +10,24 @@
   <button @click="apaga">Apaga</button>
   <button @click="cancela">Cancela</button>
   <button @click="desfaz">Desfaz</button>
-  <input v-model="message"/>
+  <button @click="fullScreen">FullScreen</button>
+
+  <input v-model="message" />
 </template>
 
 <script>
-import { fabric } from 'fabric';
+import { fabric } from "fabric";
 
 export default {
-  data(){
+  data() {
     return {
       canvas: null,
-      message:"0",
+      message: "0",
       desenhando: {
         poligono: null, //objeto que esta sendo desenhado
-        linha: null,   //linha que esta sendo desenhada atualmente
-        linhas: [],   //lista de linhas que foram desenhadas no canvas entre os pontos
-        pontos: []    //lista circulos desenhados no canvas nos pontos em que foram clicados
+        linha: null, //linha que esta sendo desenhada atualmente
+        linhas: [], //lista de linhas que foram desenhadas no canvas entre os pontos
+        pontos: [], //lista circulos desenhados no canvas nos pontos em que foram clicados
       },
       objetos: [],
       ultimaRef: -1,
@@ -33,27 +35,30 @@ export default {
       imgWidth: 640,
       imgHeight: 480,
       modo: 0, //0 - nada, 1 - segmentacao, 2 - bbox
-    }
+      full: false,
+    };
   },
   mounted() {
-    this.canvas = new fabric.Canvas('canvas');
+    this.canvas = new fabric.Canvas("canvas");
     this.canvas.selection = false;
-    this.canvas.on('mouse:wheel', this.zoomScroll);
-    this.canvas.on('object:moving', this.moveObject);
-    this.canvas.on('mouse:down', this.mouseDown);
-    this.canvas.on('mouse:up', this.mouseUp);
-    this.canvas.on('mouse:move', this.mouseMove);
+    this.canvas.on("mouse:wheel", this.zoomScroll);
+    this.canvas.on("object:moving", this.moveObject);
+    this.canvas.on("mouse:down", this.mouseDown);
+    this.canvas.on("mouse:up", this.mouseUp);
+    this.canvas.on("mouse:move", this.mouseMove);
 
-    this.inicia("https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png");
+    this.inicia(
+      "https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png"
+    );
     // this.inicia("https://media.discordapp.net/attachments/947876906185924648/1040255879435526204/7007_1667849369020.jpg");
   },
-  
+
   methods: {
-    zoomScroll(event){
-      let delta = event.e.deltaY *-1;
+    zoomScroll(event) {
+      let delta = event.e.deltaY * -1;
       let zoom = this.canvas.getZoom();
       // zoom *= 0.999 ** delta;
-      zoom = zoom + delta/200;
+      zoom = zoom + delta / 200;
       if (zoom > 15) zoom = 15;
       if (zoom < 1) zoom = 1;
       this.canvas.zoomToPoint({ x: event.e.offsetX, y: event.e.offsetY }, zoom);
@@ -62,167 +67,205 @@ export default {
       var vpt = this.canvas.viewportTransform;
       if (vpt[4] >= 0) {
         this.canvas.viewportTransform[4] = 0;
-      } 
-      else if (vpt[4] < this.canvas.getWidth() - this.imgWidth * zoom) {
-        this.canvas.viewportTransform[4] = this.canvas.getWidth() - this.imgWidth * zoom;
+      } else if (vpt[4] < this.canvas.getWidth() - this.imgWidth * zoom) {
+        this.canvas.viewportTransform[4] =
+          this.canvas.getWidth() - this.imgWidth * zoom;
       }
       if (vpt[5] >= 0) {
         this.canvas.viewportTransform[5] = 0;
-      } 
-      else if (vpt[5] < this.canvas.getHeight() - this.imgHeight * zoom) {
-        this.canvas.viewportTransform[5] = this.canvas.getHeight() - this.imgHeight * zoom;
+      } else if (vpt[5] < this.canvas.getHeight() - this.imgHeight * zoom) {
+        this.canvas.viewportTransform[5] =
+          this.canvas.getHeight() - this.imgHeight * zoom;
       }
     },
-    moveObject(event){
+    moveObject(event) {
       var p = event.target;
-      this.objetos[0].points[p.id] = {x: p.getCenterPoint().x, y: p.getCenterPoint().y};
+      this.objetos[0].points[p.id] = {
+        x: p.getCenterPoint().x,
+        y: p.getCenterPoint().y,
+      };
     },
-    mouseMove(event){
-      if(this.desenhando.linha && this.desenhando.linha.class == "line" && this.modo == 1){
-        this.desenhando.linha.set({ x2: event.absolutePointer.x, y2: event.absolutePointer.y});
+    mouseMove(event) {
+      if (
+        this.desenhando.linha &&
+        this.desenhando.linha.class == "line" &&
+        this.modo == 1
+      ) {
+        this.desenhando.linha.set({
+          x2: event.absolutePointer.x,
+          y2: event.absolutePointer.y,
+        });
         this.canvas.renderAll();
         //desenha rastro linha
-      }
-      else if (this.modo == 2 && this.desenhando.poligono){
-        this.desenhando.poligono.set({ width: (this.desenhando.poligono.left - event.absolutePointer.x) *-1 });
-        this.desenhando.poligono.set({ height: (this.desenhando.poligono.top - event.absolutePointer.y) *-1});
+      } else if (this.modo == 2 && this.desenhando.poligono) {
+        this.desenhando.poligono.set({
+          width: (this.desenhando.poligono.left - event.absolutePointer.x) * -1,
+        });
+        this.desenhando.poligono.set({
+          height: (this.desenhando.poligono.top - event.absolutePointer.y) * -1,
+        });
         this.canvas.renderAll();
       }
     },
-    mouseDown(event){
-      if(event.target && this.desenhando.pontos.length > 0 && this.desenhando.pontos[0].id == event.target.id){
+    mouseDown(event) {
+      if (
+        event.target &&
+        this.desenhando.pontos.length > 0 &&
+        this.desenhando.pontos[0].id == event.target.id
+      ) {
         this.desenhaPoligono();
-      }
-      else if(this.modo == 1){
+      } else if (this.modo == 1) {
         this.adicionaPonto(event.absolutePointer);
-      }
-      else if( this.modo == 2){
+      } else if (this.modo == 2) {
         this.comecaQuadrado(event);
       }
     },
-    mouseUp(event){
-      if(this.modo == 2){
+    fullScreen() {
+      if (!this.full) {
+        this.canvas.setDimensions(
+          {
+            width: "1000px",
+            height: "1000px",
+          },
+          {
+            cssOnly: true,
+          }
+        );
+        this.full = !this.full;
+      } else {
+        this.canvas.setDimensions(
+          {
+            width: "640px",
+            height: "480px",
+          },
+          {
+            cssOnly: true,
+          }
+        );
+        this.full = !this.full;
+      }
+    },
+    mouseUp(event) {
+      if (this.modo == 2) {
         this.fechaQuadrado(event);
       }
     },
     //PRONTO
-    adicionaPonto(pontoAtual){
-
+    adicionaPonto(pontoAtual) {
       //adiciona um circulo na posicao clicada
       //gero um id unico pro ponto
       var random = Math.floor(Math.random() * (999999 - 99 + 1)) + 99;
       var id = new Date().getTime() + random;
-      
+
       var circle = new fabric.Circle({
         radius: 3,
-        fill: '#ffffff',
-        stroke: '#333333',
+        fill: "#ffffff",
+        stroke: "#333333",
         strokeWidth: 0.5,
-        left: (pontoAtual.x),
-        top: (pontoAtual.y),
+        left: pontoAtual.x,
+        top: pontoAtual.y,
         selectable: false,
         hasBorders: false,
         hasControls: false,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         id: id,
-        objectCaching: false
+        objectCaching: false,
       });
       //verifico se e o primeiro ponto, e se for mudo a cor
       if (this.desenhando.pontos.length == 0) {
         circle.set({
-            fill: 'red'
-        })
+          fill: "red",
+        });
       }
       this.desenhando.pontos.push(circle);
       this.canvas.add(circle);
 
       //cria a linha de rastro
-      var points = [(pontoAtual.x), (pontoAtual.y), (pontoAtual.x), (pontoAtual.y)];
+      var points = [pontoAtual.x, pontoAtual.y, pontoAtual.x, pontoAtual.y];
       let line = new fabric.Line(points, {
-            strokeWidth: 2,
-            fill: '#999999',
-            stroke: '#999999',
-            class: 'line',
-            originX: 'center',
-            originY: 'center',
-            selectable: false,
-            hasBorders: false,
-            hasControls: false,
-            evented: false,
-            objectCaching: false
-        });
+        strokeWidth: 2,
+        fill: "#999999",
+        stroke: "#999999",
+        class: "line",
+        originX: "center",
+        originY: "center",
+        selectable: false,
+        hasBorders: false,
+        hasControls: false,
+        evented: false,
+        objectCaching: false,
+      });
       this.desenhando.linha = line;
       this.desenhando.linhas.push(line);
       this.canvas.add(line);
     },
-    desenhaPoligono(){
+    desenhaPoligono() {
       var pontosTemp = [];
 
       //pego uma lista de coordenadas dos pontos, e apago os circulos
-      this.desenhando.pontos.forEach((point,index) => {
+      this.desenhando.pontos.forEach((point, index) => {
         pontosTemp.push({
           x: point.left,
-          y: point.top
+          y: point.top,
         });
         this.canvas.remove(point);
       });
       //apago as linhas desenhadas
-      this.desenhando.linhas.forEach((linha,index) => {
+      this.desenhando.linhas.forEach((linha, index) => {
         this.canvas.remove(linha);
-      })
+      });
       //desenho o poligo final
       this.ultimaRef++;
       var polygon = new fabric.Polygon(pontosTemp, {
-            stroke: '#333333',
-            strokeWidth: 0.5,
-            fill: 'white',
-            opacity: 0.2,
-            hasBorders: false,
-            hasControls: false,
-            id: this.ultimaRef,
-            selectable: false,
-            objectCaching: false,
-        });
+        stroke: "#333333",
+        strokeWidth: 0.5,
+        fill: "white",
+        opacity: 0.2,
+        hasBorders: false,
+        hasControls: false,
+        id: this.ultimaRef,
+        selectable: false,
+        objectCaching: false,
+      });
       this.canvas.add(polygon);
       this.objetos.push(polygon);
-      this.modo=0;
+      this.modo = 0;
     },
 
-    comecaQuadrado(event){
+    comecaQuadrado(event) {
       let pontoAtual = event.absolutePointer;
 
       //adiciona um circulo na posicao clicada
       //gero um id unico pro ponto
       var random = Math.floor(Math.random() * (999999 - 99 + 1)) + 99;
       var id = new Date().getTime() + random;
-      
+
       var circle = new fabric.Circle({
         radius: 3,
-        fill: 'red',
-        stroke: '#333333',
+        fill: "red",
+        stroke: "#333333",
         strokeWidth: 0.5,
-        left: (pontoAtual.x),
-        top: (pontoAtual.y),
+        left: pontoAtual.x,
+        top: pontoAtual.y,
         selectable: false,
         hasBorders: false,
         hasControls: false,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         id: id,
-        objectCaching: false
+        objectCaching: false,
       });
       this.desenhando.pontos.push(circle);
       this.canvas.add(circle);
-
 
       this.ultimaRef++;
       var rect = new fabric.Rect({
         left: pontoAtual.x,
         top: pontoAtual.y,
-        stroke: '#333333',
+        stroke: "#333333",
         strokeWidth: 0.5,
-        fill: 'white',
+        fill: "white",
         id: this.ultimaRef,
         opacity: 0.2,
         selectable: false,
@@ -231,20 +274,23 @@ export default {
 
       this.desenhando.poligono = rect;
       this.canvas.add(rect);
-      
     },
 
-    fechaQuadrado(event){
+    fechaQuadrado(event) {
       let pontoAtual = event.absolutePointer;
-      this.desenhando.poligono.set({ width: (this.desenhando.poligono.left - pontoAtual.x)*-1  });
-      this.desenhando.poligono.set({ height: (this.desenhando.poligono.top - pontoAtual.y)*-1  });
+      this.desenhando.poligono.set({
+        width: (this.desenhando.poligono.left - pontoAtual.x) * -1,
+      });
+      this.desenhando.poligono.set({
+        height: (this.desenhando.poligono.top - pontoAtual.y) * -1,
+      });
       this.canvas.renderAll();
       this.canvas.remove(this.desenhando.pontos[0]);
       this.objetos.push(this.desenhando.poligono);
-      this.modo = 0
+      this.modo = 0;
     },
     tecladoEvent(event) {
-      console.log("teclado evnet chamado",event)
+      console.log("teclado evnet chamado", event);
       //ctrl + z
       if (event.ctrlKey && event.key === "z") {
         this.desfaz();
@@ -254,197 +300,196 @@ export default {
       }
     },
 
-
     //VERIFICAR
-    inicia(image){
-      this.canvas.setBackgroundColor({
-        source: image,
-        offsetX: 640,
-        offsetY: 480
-      }, 
-      this.canvas.renderAll.bind( this.canvas));
-
+    inicia(image) {
+      this.canvas.setBackgroundColor(
+        {
+          source: image,
+          offsetX: 640,
+          offsetY: 480,
+        },
+        this.canvas.renderAll.bind(this.canvas)
+      );
     },
     //DEBUG
-    listaDados(){
+    listaDados() {
       this.canvas.setZoom(1);
-      console.log("lista poligonos",this.objetos);
-      console.log("ultimaRef",this.ultimaRef);
-      console.log("zoom",this.canvas.getZoom());
+      console.log("lista poligonos", this.objetos);
+      console.log("ultimaRef", this.ultimaRef);
+      console.log("zoom", this.canvas.getZoom());
       var vpt = this.canvas.viewportTransform;
       if (vpt[4] >= 0) {
         this.canvas.viewportTransform[4] = 0;
-      } 
-      else if (vpt[4] < this.canvas.getWidth() - this.imgWidth * 1) {
-        this.canvas.viewportTransform[4] = this.canvas.getWidth() - this.imgWidth * 1;
+      } else if (vpt[4] < this.canvas.getWidth() - this.imgWidth * 1) {
+        this.canvas.viewportTransform[4] =
+          this.canvas.getWidth() - this.imgWidth * 1;
       }
       if (vpt[5] >= 0) {
         this.canvas.viewportTransform[5] = 0;
-      } 
-      else if (vpt[5] < this.canvas.getHeight() - this.imgHeight * 1) {
-        this.canvas.viewportTransform[5] = this.canvas.getHeight() - this.imgHeight * 1;
+      } else if (vpt[5] < this.canvas.getHeight() - this.imgHeight * 1) {
+        this.canvas.viewportTransform[5] =
+          this.canvas.getHeight() - this.imgHeight * 1;
       }
     },
-    adicionaPoligono(){
+    adicionaPoligono() {
       this.desenhando = {
         poligono: null,
         linha: null,
         linhas: [],
-        pontos: []
+        pontos: [],
       };
       this.modo = 1;
     },
-    adicionaQuadrado(){
+    adicionaQuadrado() {
       this.desenhando = {
         poligono: null,
         linha: null,
         linhas: [],
-        pontos: []
+        pontos: [],
       };
       this.modo = 2;
     },
-    editaObjeto(){
-      this.edicaoCirculos=[];
+    editaObjeto() {
+      this.edicaoCirculos = [];
       let a = parseInt(this.message);
-      let objs = this.objetos.filter(function(obj){
+      let objs = this.objetos.filter(function (obj) {
         return obj.id == a;
       });
-      let objeto = objs[0]
-      console.log("edita objeto",objeto,objeto.type)
-      if (objeto.type == "polygon"){
+      let objeto = objs[0];
+      console.log("edita objeto", objeto, objeto.type);
+      if (objeto.type == "polygon") {
         objeto.points.forEach((element, index) => {
           var circle = new fabric.Circle({
             radius: 3,
-            fill: '#ffffff',
-            stroke: '#333333',
+            fill: "#ffffff",
+            stroke: "#333333",
             strokeWidth: 0.5,
-            left: (element.x),
-            top: (element.y),
+            left: element.x,
+            top: element.y,
             hasBorders: false,
             hasControls: false,
-            originX: 'center',
-            originY: 'center',
+            originX: "center",
+            originY: "center",
             id: index,
-            objectCaching: false
+            objectCaching: false,
           });
           this.canvas.add(circle);
           this.edicaoCirculos.push(circle);
         });
-      }
-      else if(objeto.type == "rect"){
+      } else if (objeto.type == "rect") {
         var circleIni = new fabric.Circle({
           radius: 3,
-          fill: '#ffffff',
-          stroke: '#333333',
+          fill: "#ffffff",
+          stroke: "#333333",
           strokeWidth: 0.5,
-          left: (this.desenhando.poligono.left),
-          top: (this.desenhando.poligono.top),
+          left: this.desenhando.poligono.left,
+          top: this.desenhando.poligono.top,
           hasBorders: false,
           hasControls: false,
-          originX: 'center',
-          originY: 'center',
+          originX: "center",
+          originY: "center",
           id: 0,
-          objectCaching: false
+          objectCaching: false,
         });
         this.canvas.add(circleIni);
         this.edicaoCirculos.push(circleIni);
         var circleFim = new fabric.Circle({
           radius: 3,
-          fill: '#ffffff',
-          stroke: '#333333',
+          fill: "#ffffff",
+          stroke: "#333333",
           strokeWidth: 0.5,
-          left: (this.desenhando.poligono.left + this.desenhando.poligono.width),
-          top: (this.desenhando.poligono.top + this.desenhando.poligono.height),
+          left: this.desenhando.poligono.left + this.desenhando.poligono.width,
+          top: this.desenhando.poligono.top + this.desenhando.poligono.height,
           hasBorders: false,
           hasControls: false,
-          originX: 'center',
-          originY: 'center',
+          originX: "center",
+          originY: "center",
           id: 0,
-          objectCaching: false
+          objectCaching: false,
         });
         this.canvas.add(circleFim);
-        this.edicaoCirculos.push(circleFim);        
+        this.edicaoCirculos.push(circleFim);
       }
     },
-    paraEdicao(){
-      this.edicaoCirculos.forEach((point,index) => {
+    paraEdicao() {
+      this.edicaoCirculos.forEach((point, index) => {
         this.canvas.remove(point);
       });
-      this.edicaoCirculos = []
+      this.edicaoCirculos = [];
     },
-    apaga(){
+    apaga() {
       let forma = parseInt(this.message);
-      let remover = this.objetos.filter(function(obj){
+      let remover = this.objetos.filter(function (obj) {
         return obj.id == forma;
       });
-      this.canvas.remove(remover[0])
-      this.objetos = this.objetos.filter(function(obj){
+      this.canvas.remove(remover[0]);
+      this.objetos = this.objetos.filter(function (obj) {
         return obj.id != forma;
-      })
+      });
     },
-    showHide(){
-      this.objetos.forEach((object,index) => {
+    showHide() {
+      this.objetos.forEach((object, index) => {
         object.visible = !object.visible;
       });
       this.canvas.renderAll();
     },
-    destaca(){
-      let a = parseInt(this.message)
-      let objs = this.objetos.filter(function(obj){
+    destaca() {
+      let a = parseInt(this.message);
+      let objs = this.objetos.filter(function (obj) {
         return obj.id == a;
       });
-      let objeto = objs[0]
-      objeto.fill= '#ffffff';
-      objeto.stroke= '#333333';
+      let objeto = objs[0];
+      objeto.fill = "#ffffff";
+      objeto.stroke = "#333333";
       objeto.visible = true;
       this.canvas.renderAll();
     },
-    cancela(){
-      if(this.modo != 0){
-        this.desenhando.pontos.forEach((point,index) => {
-        this.canvas.remove(point);
-      });
-      //apago as linhas desenhadas
-      this.desenhando.linhas.forEach((linha,index) => {
-        this.canvas.remove(linha);
-      })
-      this.canvas.remove(this.desenhando.poligono)
-      this.modo = 0;
+    cancela() {
+      if (this.modo != 0) {
+        this.desenhando.pontos.forEach((point, index) => {
+          this.canvas.remove(point);
+        });
+        //apago as linhas desenhadas
+        this.desenhando.linhas.forEach((linha, index) => {
+          this.canvas.remove(linha);
+        });
+        this.canvas.remove(this.desenhando.poligono);
+        this.modo = 0;
       }
     },
-    desfaz(){
-      if(this.modo==1){
-        if(this.desenhando.pontos.length >1){
+    desfaz() {
+      if (this.modo == 1) {
+        if (this.desenhando.pontos.length > 1) {
           //apago o ultimo ponto
-          this.canvas.remove(this.desenhando.pontos[this.desenhando.pontos.length-1]);
+          this.canvas.remove(
+            this.desenhando.pontos[this.desenhando.pontos.length - 1]
+          );
           this.desenhando.pontos.pop();
-          this.canvas.remove(this.desenhando.pontos[this.desenhando.pontos.length-1]);
+          this.canvas.remove(
+            this.desenhando.pontos[this.desenhando.pontos.length - 1]
+          );
           this.desenhando.pontos.pop();
           //apago a ultima linha
-          this.canvas.remove(this.desenhando.linhas[this.desenhando.linhas.length-1]);
+          this.canvas.remove(
+            this.desenhando.linhas[this.desenhando.linhas.length - 1]
+          );
           this.desenhando.linhas.pop();
-          this.canvas.remove(this.desenhando.linhas[this.desenhando.linhas.length-1]);
+          this.canvas.remove(
+            this.desenhando.linhas[this.desenhando.linhas.length - 1]
+          );
           let removido = this.desenhando.linhas.pop();
-          this.adicionaPonto({x: removido.x1, y:removido.y1})
+          this.adicionaPonto({ x: removido.x1, y: removido.y1 });
           //apaga o ultimo ponto do poligono
-          console.log("rtshrgetrewggrweerwgdfg",this.desenhando.poligono)
+          console.log("rtshrgetrewggrweerwgdfg", this.desenhando.poligono);
+        } else {
+          this.cancela();
+          this.adicionaPoligono();
         }
-        else{
-          this.cancela()
-          this.adicionaPoligono()
-        }
+      } else if (this.modo == 2) {
+        this.cancela();
+        this.adicionaQuadrado();
       }
-      else if (this.modo ==2 ){
-        this.cancela()
-        this.adicionaQuadrado()
-      }
-      
-    }
+    },
   },
 };
-
-
 </script>
-
-
-
