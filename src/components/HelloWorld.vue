@@ -10,7 +10,24 @@
   <button @click="apaga">Apaga</button>
   <button @click="cancela">Cancela</button>
   <button @click="desfaz">Desfaz</button>
-  <input v-model="message"/>
+  <input v-model="message" placeholder="id objeto"/>
+  <p>
+    Linha
+    <input type="color" id="head" name="head" v-model="parametros.corBorda">
+    <input v-model="parametros.grosuraBorda" placeholder="grosura borda"/>
+  </p>
+  <p>
+    Preenchimento/Ponto
+    <input type="color" id="head" name="head" v-model="parametros.corPreenchimento">
+    <input v-model="parametros.transparenciaPreenchimento" placeholder="transparencia preenchimento entre 0 e 1"/>
+  </p>
+  <p>
+    <input type="checkbox" v-model="parametros.mostraID"/>
+    Exibir ID
+  </p>
+  <button @click="atualizar">Atualizar</button>
+  
+
 </template>
 
 <script>
@@ -27,7 +44,15 @@ export default {
         linhas: [],   //lista de linhas que foram desenhadas no canvas entre os pontos
         pontos: []    //lista circulos desenhados no canvas nos pontos em que foram clicados
       },
+      parametros:{
+        mostraID: true,
+        corBorda: "#999999",
+        corPreenchimento: "#ffffff",
+        grosuraBorda: 1,
+        transparenciaPreenchimento: 0.1,
+      },
       objetos: [],
+      textos: [],
       ultimaRef: -1,
       edicaoCirculos: [],
       imgWidth: 640,
@@ -143,8 +168,8 @@ export default {
       
       var circle = new fabric.Circle({
         radius: 3,
-        fill: '#ffffff',
-        stroke: '#333333',
+        fill: this.parametros.corPreenchimento,
+        stroke: this.parametros.corBorda,
         strokeWidth: 0.5,
         left: (pontoAtual.x),
         top: (pontoAtual.y),
@@ -169,8 +194,8 @@ export default {
       var points = [(pontoAtual.x), (pontoAtual.y), (pontoAtual.x), (pontoAtual.y)];
       let line = new fabric.Line(points, {
             strokeWidth: 2,
-            fill: '#999999',
-            stroke: '#999999',
+            fill: this.parametros.corPreenchimento,
+            stroke: this.parametros.corBorda,
             class: 'line',
             originX: 'center',
             originY: 'center',
@@ -202,9 +227,9 @@ export default {
       //desenho o poligo final
       this.ultimaRef++;
       var polygon = new fabric.Polygon(pontosTemp, {
-            stroke: '#333333',
+            stroke: this.parametros.corBorda,
             strokeWidth: 0.5,
-            fill: 'white',
+            fill: this.parametros.corPreenchimento,
             opacity: 0.2,
             hasBorders: false,
             hasControls: false,
@@ -214,6 +239,7 @@ export default {
         });
       this.canvas.add(polygon);
       this.objetos.push(polygon);
+      this.mostraID();
       this.modo=0;
     },
     comecaQuadrado(event){
@@ -226,8 +252,8 @@ export default {
       
       var circle = new fabric.Circle({
         radius: 3,
-        fill: 'red',
-        stroke: '#333333',
+        fill: this.parametros.corPreenchimento,
+        stroke: this.parametros.corBorda,
         strokeWidth: 0.5,
         left: (pontoAtual.x),
         top: (pontoAtual.y),
@@ -247,9 +273,9 @@ export default {
       var rect = new fabric.Rect({
         left: pontoAtual.x,
         top: pontoAtual.y,
-        stroke: '#333333',
+        stroke: this.parametros.corBorda,
         strokeWidth: 0.5,
-        fill: 'white',
+        fill: this.parametros.corPreenchimento,
         id: this.ultimaRef,
         opacity: 0.2,
         selectable: false,
@@ -260,7 +286,6 @@ export default {
       this.canvas.add(rect);
       
     },
-
     fechaQuadrado(event){
       let pontoAtual = event.absolutePointer;
       this.desenhando.poligono.set({ width: (this.desenhando.poligono.left - pontoAtual.x)*-1  });
@@ -268,6 +293,7 @@ export default {
       this.canvas.renderAll();
       this.canvas.remove(this.desenhando.pontos[0]);
       this.objetos.push(this.desenhando.poligono);
+      this.mostraID();
       this.modo = 0
     },
     tecladoEvent(event) {
@@ -338,8 +364,8 @@ export default {
         objeto.points.forEach((element, index) => {
           var circle = new fabric.Circle({
             radius: 3,
-            fill: '#ffffff',
-            stroke: '#333333',
+            fill: this.parametros.corPreenchimento,
+            stroke: this.parametros.corBorda,
             strokeWidth: 0.5,
             left: (element.x),
             top: (element.y),
@@ -357,8 +383,8 @@ export default {
       else if(objeto.type == "rect"){
         var circleIni = new fabric.Circle({
           radius: 3,
-          fill: '#ffffff',
-          stroke: '#333333',
+          fill: this.parametros.corPreenchimento,
+          stroke: this.parametros.corBorda,
           strokeWidth: 0.5,
           left: (objeto.left),
           top: (objeto.top),
@@ -373,8 +399,8 @@ export default {
         this.edicaoCirculos.push(circleIni);
         var circleFim = new fabric.Circle({
           radius: 3,
-          fill: '#ffffff',
-          stroke: '#333333',
+          fill: this.parametros.corPreenchimento,
+          stroke: this.parametros.corBorda,
           strokeWidth: 0.5,
           left: (objeto.left + objeto.width),
           top: (objeto.top + objeto.height),
@@ -460,11 +486,36 @@ export default {
         this.adicionaQuadrado()
       }
       
-    }
-  },
-};
-
-
+    },
+    mostraID(){
+      if(this.parametros.mostraID){
+        this.objetos.forEach((obj,index) => {
+          console.log("obj id",obj.id)
+          if(obj.type == "polygon"){
+            var text = new fabric.Text(""+obj.id,{
+              left: obj.points[0].x,
+              top:obj.points[0].y,
+              id: obj.id,
+              fill: this.parametros.corBorda,
+            });
+            this.textos.push(text);
+            this.canvas.add(text);
+          }
+          else if(obj.type == "rect"){
+            var text1 = new fabric.Text(""+obj.id,{
+              left: obj.left,
+              top:obj.top,
+              id: obj.id,
+              fill: this.parametros.corBorda,
+            });
+            this.textos.push(text1);
+            this.canvas.add(text1);
+          }
+        }); 
+      }
+    },
+  }
+}
 </script>
 
 
