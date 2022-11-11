@@ -1,5 +1,5 @@
 <template>
-  <canvas width="640" height="480" id="canvas" @keyup="tecladoEvent"></canvas>
+  <canvas width="640" height="480" id="canvas" ></canvas>
   <button @click="listaDados">Lista Objetos</button>
   <button @click="adicionaPoligono">Novo Poligono</button>
   <button @click="adicionaQuadrado">Novo Quadrado</button>
@@ -43,7 +43,7 @@ export default {
     this.canvas.on('mouse:down', this.mouseDown);
     this.canvas.on('mouse:up', this.mouseUp);
     this.canvas.on('mouse:move', this.mouseMove);
-
+    document.addEventListener("keyup", this.tecladoEvent);
     this.inicia("https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png");
     // this.inicia("https://media.discordapp.net/attachments/947876906185924648/1040255879435526204/7007_1667849369020.jpg");
   },
@@ -188,7 +188,6 @@ export default {
       this.objetos.push(polygon);
       this.modo=0;
     },
-
     comecaQuadrado(event){
       let pontoAtual = event.absolutePointer;
 
