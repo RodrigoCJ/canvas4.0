@@ -74,8 +74,38 @@ export default {
       }
     },
     moveObject(event){
+      let a = parseInt(this.message);
+      let objs = this.objetos.filter(function(obj){
+        return obj.id == a;
+      });
+      let objeto = objs[0];
       var p = event.target;
-      this.objetos[0].points[p.id] = {x: p.getCenterPoint().x, y: p.getCenterPoint().y};
+      if(objeto.type == "polygon"){
+        objeto.points[p.id] = {x: p.getCenterPoint().x, y: p.getCenterPoint().y};
+      }
+      else if(objeto.type == "rect"){
+       console.log("editando quadrado")
+       let cordIni = {x:objeto.left, y: objeto.top};
+       let cordFin = {x:objeto.left + objeto.width, y: objeto.top + objeto.height};
+
+        if(p.id == 'i'){
+          cordIni.x = p.getCenterPoint().x;
+          cordIni.y = p.getCenterPoint().y;
+        }
+        if(p.id == 'f'){
+          cordFin.x = p.getCenterPoint().x;
+          cordFin.y = p.getCenterPoint().y;
+        }
+
+
+       //inicial
+       objeto.set({ left: (cordIni.x)  });
+       objeto.set({ top: (cordIni.y)  });
+
+       //final
+       objeto.set({ width: (cordIni.x - cordFin.x)*-1  });
+       objeto.set({ height: (cordIni.y - cordFin.y)*-1  });
+      }   
     },
     mouseMove(event){
       if(this.desenhando.linha && this.desenhando.linha.class == "line" && this.modo == 1){
@@ -243,7 +273,6 @@ export default {
       this.modo = 0
     },
     tecladoEvent(event) {
-      console.log("teclado evnet chamado",event)
       //ctrl + z
       if (event.ctrlKey && event.key === "z") {
         this.desfaz();
@@ -252,8 +281,6 @@ export default {
         this.cancela();
       }
     },
-
-
     //VERIFICAR
     inicia(image){
       this.canvas.setBackgroundColor({
@@ -336,13 +363,13 @@ export default {
           fill: '#ffffff',
           stroke: '#333333',
           strokeWidth: 0.5,
-          left: (this.desenhando.poligono.left),
-          top: (this.desenhando.poligono.top),
+          left: (objeto.left),
+          top: (objeto.top),
           hasBorders: false,
           hasControls: false,
           originX: 'center',
           originY: 'center',
-          id: 0,
+          id: 'i',
           objectCaching: false
         });
         this.canvas.add(circleIni);
@@ -352,13 +379,13 @@ export default {
           fill: '#ffffff',
           stroke: '#333333',
           strokeWidth: 0.5,
-          left: (this.desenhando.poligono.left + this.desenhando.poligono.width),
-          top: (this.desenhando.poligono.top + this.desenhando.poligono.height),
+          left: (objeto.left + objeto.width),
+          top: (objeto.top + objeto.height),
           hasBorders: false,
           hasControls: false,
           originX: 'center',
           originY: 'center',
-          id: 0,
+          id: 'f',
           objectCaching: false
         });
         this.canvas.add(circleFim);
