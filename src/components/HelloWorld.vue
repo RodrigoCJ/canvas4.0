@@ -1,5 +1,5 @@
 <template>
-  <canvas ref="can" width="640" height="480" id="canvas"></canvas>
+  <canvas width="640" height="480" id="canvas"></canvas>
   <button @click="listaDados">Lista Objetos</button>
   <button @click="adicionaPoligono">Novo Poligono</button>
   <button @click="adicionaQuadrado">Novo Quadrado</button>
@@ -7,7 +7,7 @@
   <button @click="paraEdicao">Para Edicao</button>
   <button >Destaca</button>
   <button >Oculta/Desoculta</button>
-  <button >Apaga</button>
+  <button @click="apaga">Apaga</button>
   <input v-model="message"/>
 </template>
 
@@ -34,8 +34,7 @@ export default {
     }
   },
   mounted() {
-    const ref = this.$refs.can;
-    this.canvas = new fabric.Canvas(ref);
+    this.canvas = new fabric.Canvas('canvas');
     this.canvas.selection = false;
     this.canvas.on('mouse:wheel', this.zoomScroll);
     this.canvas.on('object:moving', this.moveObject);
@@ -281,6 +280,7 @@ export default {
     editaObjeto(){
       this.edicaoCirculos=[];
       let objeto = this.objetos[parseInt(this.message)]
+      console.log("edita objeto",objeto,objeto.type)
       if (objeto.type == "polygon"){
         objeto.points.forEach((element, index) => {
           var circle = new fabric.Circle({
@@ -288,8 +288,8 @@ export default {
             fill: '#ffffff',
             stroke: '#333333',
             strokeWidth: 0.5,
-            left: (this.desenhando.poligono.left),
-            top: (this.desenhando.poligono.top),
+            left: (element.x),
+            top: (element.y),
             hasBorders: false,
             hasControls: false,
             originX: 'center',
@@ -341,6 +341,16 @@ export default {
         this.canvas.remove(point);
       });
       this.edicaoCirculos = []
+    },
+    apaga(){
+      let forma = parseInt(this.message);
+      let remover = this.objetos.filter(function(obj){
+        return obj.id == forma;
+      });
+      this.canvas.remove(remover[0])
+      this.objetos = this.objetos.filter(function(obj){
+        return obj.id != forma;
+      })
     }
 
   },
