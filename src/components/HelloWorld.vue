@@ -5,8 +5,8 @@
   <button @click="adicionaQuadrado">Novo Quadrado</button>
   <button @click="editaObjeto">Edita</button>
   <button @click="paraEdicao">Para Edicao</button>
-  <button >Destaca</button>
-  <button >Oculta/Desoculta</button>
+  <button @click="destaca">Destaca</button>
+  <button @click="showHide">Oculta/Desoculta</button>
   <button @click="apaga">Apaga</button>
   <input v-model="message"/>
 </template>
@@ -279,7 +279,11 @@ export default {
     },
     editaObjeto(){
       this.edicaoCirculos=[];
-      let objeto = this.objetos[parseInt(this.message)]
+      let a = parseInt(this.message);
+      let objs = this.objetos.filter(function(obj){
+        return obj.id == a;
+      });
+      let objeto = objs[0]
       console.log("edita objeto",objeto,objeto.type)
       if (objeto.type == "polygon"){
         objeto.points.forEach((element, index) => {
@@ -351,6 +355,23 @@ export default {
       this.objetos = this.objetos.filter(function(obj){
         return obj.id != forma;
       })
+    },
+    showHide(){
+      this.objetos.forEach((object,index) => {
+        object.visible = !object.visible;
+      });
+      this.canvas.renderAll();
+    },
+    destaca(){
+      let a = parseInt(this.message)
+      let objs = this.objetos.filter(function(obj){
+        return obj.id == a;
+      });
+      let objeto = objs[0]
+      objeto.fill= '#ffffff';
+      objeto.stroke= '#333333';
+      objeto.visible = true;
+      this.canvas.renderAll();
     }
 
   },
