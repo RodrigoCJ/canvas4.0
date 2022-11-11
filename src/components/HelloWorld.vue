@@ -9,6 +9,7 @@
   <button @click="showHide">Oculta/Desoculta</button>
   <button @click="apaga">Apaga</button>
   <button @click="cancela">Cancela</button>
+  <button @click="desfaz">Desfaz</button>
   <input v-model="message"/>
 </template>
 
@@ -21,10 +22,10 @@ export default {
       canvas: null,
       message:"0",
       desenhando: {
-        poligono: null,
-        linha: null,
-        linhas: [],
-        pontos: []
+        poligono: null, //objeto que esta sendo desenhado
+        linha: null,   //linha que esta sendo desenhada atualmente
+        linhas: [],   //lista de linhas que foram desenhadas no canvas entre os pontos
+        pontos: []    //lista circulos desenhados no canvas nos pontos em que foram clicados
       },
       objetos: [],
       ultimaRef: -1,
@@ -92,7 +93,7 @@ export default {
         this.desenhaPoligono();
       }
       else if(this.modo == 1){
-        this.adicionaPonto(event);
+        this.adicionaPonto(event.absolutePointer);
       }
       else if( this.modo == 2){
         this.comecaQuadrado(event);
@@ -104,8 +105,7 @@ export default {
       }
     },
     //PRONTO
-    adicionaPonto(event){
-      let pontoAtual = event.absolutePointer;
+    adicionaPonto(pontoAtual){
 
       //adiciona um circulo na posicao clicada
       //gero um id unico pro ponto
@@ -396,6 +396,35 @@ export default {
         this.canvas.remove(linha);
       })
       this.canvas.remove(this.desenhando.poligono)
+      this.modo = 0;
+    },
+    desfaz(){
+      if(this.modo==1){
+        if(this.desenhando.pontos.length >1){
+          //apago o ultimo ponto
+          this.canvas.remove(this.desenhando.pontos[this.desenhando.pontos.length-1]);
+          this.desenhando.pontos.pop();
+          this.canvas.remove(this.desenhando.pontos[this.desenhando.pontos.length-1]);
+          this.desenhando.pontos.pop();
+          //apago a ultima linha
+          this.canvas.remove(this.desenhando.linhas[this.desenhando.linhas.length-1]);
+          this.desenhando.linhas.pop();
+          this.canvas.remove(this.desenhando.linhas[this.desenhando.linhas.length-1]);
+          let removido = this.desenhando.linhas.pop();
+          this.adicionaPonto({x: removido.x1, y:removido.y1})
+          //apaga o ultimo ponto do poligono
+          console.log("rtshrgetrewggrweerwgdfg",this.desenhando.poligono)
+        }
+        else{
+          this.cancela()
+          this.adicionaPoligono()
+        }
+      }
+      else if (this.modo ==2 ){
+        this.cancela()
+        this.adicionaQuadrado()
+      }
+      
     }
   },
 };
