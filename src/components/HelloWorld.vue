@@ -140,7 +140,9 @@ export default {
       });
       let objeto = objs[0];
       var p = event.target;
-      if (objeto.type == "polygon") {
+      let b = ""+event.target.id
+      console.log("move object",b)
+      if (objeto.type == "polygon" && !b.startsWith('i')) {
         objeto.points[p.id] = {
           x: p.getCenterPoint().x,
           y: p.getCenterPoint().y,
@@ -193,12 +195,44 @@ export default {
       }
     },
     mouseDown(event) {
-      if (
-        event.target &&
-        this.desenhando.pontos.length > 0 &&
-        this.desenhando.pontos[0].id == event.target.id
-      ) {
+      
+      if(event.target){
+        console.log("mouse down, event",event.target.id)
+      }
+
+      if (event.target && this.desenhando.pontos.length > 0 && this.desenhando.pontos[0].id == event.target.id) {
         this.desenhaPoligono();
+      } else if (event.target && event.target.id.startsWith('i')) {
+        let a = parseInt(this.message);
+        let objs = this.objetos.filter(function (obj) {
+          return obj.id == a;
+        });
+        let objeto = objs[0];
+        let indexf =  event.target.id.substring(1)
+        console.log("pontos do poligono,indexf",indexf)
+        console.log("pontos do poligono,prox id",indexf == objeto.points.length-1 ? 0 : parseInt(indexf)+1)
+
+
+        let atual = objeto.points[indexf]
+        let prox = objeto.points[indexf == objeto.points.length-1 ? 0 : parseInt(indexf)+1]
+
+        console.log("pontos do poligono,atual",atual)
+        console.log("pontos do poligono,prox",prox)
+
+        // let medio = { x: (parseInt(atual.x) + parseInt(prox.x))/2, y: (parseInt(atual.y) + parseInt(prox.y))/2 }
+        // console.log("pontos do poligono,medio",medio)
+        // let pontosnovos =  []
+        //   objeto.points.forEach((element, index) => {
+        //     pontosnovos.push(element)
+        //     if (index == indexf){
+        //       pontosnovos.push({x:event.absolutePointer,y:event.absolutePointer})
+        //     }
+        //   });
+           
+        //   objeto.points = pontosnovos
+        //   this.editaObjeto();
+
+        //   this.canvas.renderAll()
       } else if (this.modo == 1) {
         this.adicionaPonto(event.absolutePointer);
       } else if (this.modo == 2) {
@@ -408,6 +442,9 @@ export default {
       this.modo = 2;
     },
     editaObjeto() {
+      this.edicaoCirculos.forEach((point, index) => {
+        this.canvas.remove(point);
+      });
       this.edicaoCirculos = [];
       let a = parseInt(this.message);
       let objs = this.objetos.filter(function (obj) {
@@ -434,9 +471,7 @@ export default {
           this.edicaoCirculos.push(circle);
 
           this.criaPontoInter(objeto);
-          
-
-
+        
         });
       } 
       else if (objeto.type == "rect") {
@@ -479,17 +514,11 @@ export default {
         this.pontosIntermendiarios.forEach((element, index) => {
           this.canvas.remove(element);
         });
-        console.log("objeto",objeto.points)
         this.pontosIntermendiarios = [];
         objeto.points.forEach((element, index) => {
           let atual = objeto.points[index]
-          let prox = objeto.points[index == objeto.points.length-1 ? 0 : index+1]
+          let prox = objeto.points[index == objeto.points.length-1 ? 0 : parseInt(index)+1]
           let medio = { x: (parseInt(atual.x) + parseInt(prox.x))/2, y: (parseInt(atual.y) + parseInt(prox.y))/2 }
-
-          console.log("atual",atual)
-          console.log("prox",prox)
-          console.log("medio",medio)
-
           var circle = new fabric.Circle({
             radius: 3,
             fill: 'blue',
