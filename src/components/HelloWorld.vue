@@ -8,6 +8,7 @@
   <button @click="destaca">Destaca</button>
   <button @click="showHide">Oculta/Desoculta</button>
   <button @click="apaga">Apaga</button>
+  <button @click="cancela">Cancela</button>
   <input v-model="message"/>
 </template>
 
@@ -258,6 +259,19 @@ export default {
       console.log("lista poligonos",this.objetos);
       console.log("ultimaRef",this.ultimaRef);
       console.log("zoom",this.canvas.getZoom());
+      var vpt = this.canvas.viewportTransform;
+      if (vpt[4] >= 0) {
+        this.canvas.viewportTransform[4] = 0;
+      } 
+      else if (vpt[4] < this.canvas.getWidth() - this.imgWidth * 1) {
+        this.canvas.viewportTransform[4] = this.canvas.getWidth() - this.imgWidth * 1;
+      }
+      if (vpt[5] >= 0) {
+        this.canvas.viewportTransform[5] = 0;
+      } 
+      else if (vpt[5] < this.canvas.getHeight() - this.imgHeight * 1) {
+        this.canvas.viewportTransform[5] = this.canvas.getHeight() - this.imgHeight * 1;
+      }
     },
     adicionaPoligono(){
       this.desenhando = {
@@ -372,8 +386,17 @@ export default {
       objeto.stroke= '#333333';
       objeto.visible = true;
       this.canvas.renderAll();
+    },
+    cancela(){
+      this.desenhando.pontos.forEach((point,index) => {
+        this.canvas.remove(point);
+      });
+      //apago as linhas desenhadas
+      this.desenhando.linhas.forEach((linha,index) => {
+        this.canvas.remove(linha);
+      })
+      this.canvas.remove(this.desenhando.poligono)
     }
-
   },
 };
 
