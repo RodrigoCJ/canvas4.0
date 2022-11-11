@@ -262,7 +262,6 @@ export default {
     editaObjeto(){
       this.edicaoCirculos=[];
       let objeto = this.objetos[parseInt(this.message)]
-      console.log("objeto type",objeto.type)
       if (objeto.type == "polygon"){
         objeto.points.forEach((element, index) => {
           var circle = new fabric.Circle({
