@@ -422,16 +422,28 @@ export default {
     },
     apaga(){
       let forma = parseInt(this.message);
+
       let remover = this.objetos.filter(function(obj){
-        return obj.id == forma;
+        return parseInt(obj.id) == forma;
       });
       this.canvas.remove(remover[0])
       this.objetos = this.objetos.filter(function(obj){
-        return obj.id != forma;
+        return parseInt(obj.id) != forma;
+      })
+
+      let remove = this.textos.filter(function(obj){
+        return parseInt(obj.id) == forma;
+      });
+      this.canvas.remove(remove[0])
+      this.textos = this.textos.filter(function(obj){
+        return parseInt(obj.id) != forma;
       })
     },
     showHide(){
       this.objetos.forEach((object,index) => {
+        object.visible = !object.visible;
+      });
+      this.textos.forEach((object,index) => {
         object.visible = !object.visible;
       });
       this.canvas.renderAll();
@@ -442,8 +454,15 @@ export default {
         return obj.id == a;
       });
       let objeto = objs[0]
-      objeto.fill= '#ffffff';
-      objeto.stroke= '#333333';
+      let textos = this.textos.filter(function(obj){
+        return obj.id == a;
+      });
+      let txt = textos[0];
+      txt.fill= 'red';
+      txt.stroke= 'red';
+      txt.visible = true;
+      objeto.fill= 'red';
+      objeto.stroke= 'red';
       objeto.visible = true;
       this.canvas.renderAll();
     },
@@ -489,7 +508,6 @@ export default {
     mostraID(){
       if(this.parametros.mostraID){
         this.objetos.forEach((obj,index) => {
-          console.log("obj id",obj.id)
           if(obj.type == "polygon"){
             var text = new fabric.Text(""+obj.id,{
               left: obj.points[0].x,
