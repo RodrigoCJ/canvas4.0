@@ -88,7 +88,7 @@ export default {
       }
     },
     mouseDown(event){
-      if(event.target && this.desenhando.pontos[0].id == event.target.id){
+      if(event.target && this.desenhando.pontos.length > 0 && this.desenhando.pontos[0].id == event.target.id){
         this.desenhaPoligono();
       }
       else if(this.modo == 1){
