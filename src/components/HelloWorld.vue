@@ -84,7 +84,6 @@ export default {
         objeto.points[p.id] = {x: p.getCenterPoint().x, y: p.getCenterPoint().y};
       }
       else if(objeto.type == "rect"){
-       console.log("editando quadrado")
        let cordIni = {x:objeto.left, y: objeto.top};
        let cordFin = {x:objeto.left + objeto.width, y: objeto.top + objeto.height};
 
@@ -96,7 +95,6 @@ export default {
           cordFin.x = p.getCenterPoint().x;
           cordFin.y = p.getCenterPoint().y;
         }
-
 
        //inicial
        objeto.set({ left: (cordIni.x)  });
@@ -336,7 +334,6 @@ export default {
         return obj.id == a;
       });
       let objeto = objs[0]
-      console.log("edita objeto",objeto,objeto.type)
       if (objeto.type == "polygon"){
         objeto.points.forEach((element, index) => {
           var circle = new fabric.Circle({
@@ -452,8 +449,6 @@ export default {
           this.canvas.remove(this.desenhando.linhas[this.desenhando.linhas.length-1]);
           let removido = this.desenhando.linhas.pop();
           this.adicionaPonto({x: removido.x1, y:removido.y1})
-          //apaga o ultimo ponto do poligono
-          console.log("rtshrgetrewggrweerwgdfg",this.desenhando.poligono)
         }
         else{
           this.cancela()
