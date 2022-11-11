@@ -1,5 +1,5 @@
 <template>
-  <canvas width="640" height="480" id="canvas" @keyup="tecladoEvent"></canvas>
+  <canvas width="640" height="480" id="canvas" ></canvas>
   <button @click="listaDados">Lista Objetos</button>
   <button @click="adicionaPoligono">Novo Poligono</button>
   <button @click="adicionaQuadrado">Novo Quadrado</button>
@@ -11,8 +11,23 @@
   <button @click="cancela">Cancela</button>
   <button @click="desfaz">Desfaz</button>
   <button @click="fullScreen">FullScreen</button>
-
   <input v-model="message" />
+  <input v-model="message" placeholder="id objeto"/>
+  <p>
+    Linha
+    <input type="color" id="head" name="head" v-model="parametros.corBorda">
+    <input v-model="parametros.grosuraBorda" placeholder="grosura borda"/>
+  </p>
+  <p>
+    Preenchimento/Ponto
+    <input type="color" id="head" name="head" v-model="parametros.corPreenchimento">
+    <input v-model="parametros.transparenciaPreenchimento" placeholder="transparencia preenchimento entre 0 e 1"/>
+  </p>
+  <p>
+    <input type="checkbox" v-model="parametros.mostraID"/>
+    Exibir ID
+  </p>
+
 </template>
 
 <script>
@@ -29,7 +44,15 @@ export default {
         linhas: [], //lista de linhas que foram desenhadas no canvas entre os pontos
         pontos: [], //lista circulos desenhados no canvas nos pontos em que foram clicados
       },
+      parametros:{
+        mostraID: true,
+        corBorda: "#999999",
+        corPreenchimento: "#ffffff",
+        grosuraBorda: 2,
+        transparenciaPreenchimento: 0.2,
+      },
       objetos: [],
+      textos: [],
       ultimaRef: -1,
       edicaoCirculos: [],
       imgWidth: 640,
@@ -50,6 +73,13 @@ export default {
     this.inicia(
       "https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png"
     );
+    this.canvas.on('mouse:wheel', this.zoomScroll);
+    this.canvas.on('object:moving', this.moveObject);
+    this.canvas.on('mouse:down', this.mouseDown);
+    this.canvas.on('mouse:up', this.mouseUp);
+    this.canvas.on('mouse:move', this.mouseMove);
+    document.addEventListener("keyup", this.tecladoEvent);
+    this.inicia("https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png");
     // this.inicia("https://media.discordapp.net/attachments/947876906185924648/1040255879435526204/7007_1667849369020.jpg");
   },
 
@@ -84,6 +114,37 @@ export default {
         x: p.getCenterPoint().x,
         y: p.getCenterPoint().y,
       };
+    moveObject(event){
+      let a = parseInt(this.message);
+      let objs = this.objetos.filter(function(obj){
+        return obj.id == a;
+      });
+      let objeto = objs[0];
+      var p = event.target;
+      if(objeto.type == "polygon"){
+        objeto.points[p.id] = {x: p.getCenterPoint().x, y: p.getCenterPoint().y};
+      }
+      else if(objeto.type == "rect"){
+       let cordIni = {x:objeto.left, y: objeto.top};
+       let cordFin = {x:objeto.left + objeto.width, y: objeto.top + objeto.height};
+
+        if(p.id == 'i'){
+          cordIni.x = p.getCenterPoint().x;
+          cordIni.y = p.getCenterPoint().y;
+        }
+        if(p.id == 'f'){
+          cordFin.x = p.getCenterPoint().x;
+          cordFin.y = p.getCenterPoint().y;
+        }
+
+       //inicial
+       objeto.set({ left: (cordIni.x)  });
+       objeto.set({ top: (cordIni.y)  });
+
+       //final
+       objeto.set({ width: (cordIni.x - cordFin.x)*-1  });
+       objeto.set({ height: (cordIni.y - cordFin.y)*-1  });
+      }   
     },
     mouseMove(event) {
       if (
@@ -164,6 +225,11 @@ export default {
         strokeWidth: 0.5,
         left: pontoAtual.x,
         top: pontoAtual.y,
+        fill: this.parametros.corPreenchimento,
+        stroke: this.parametros.corBorda,
+        strokeWidth: this.parametros.grosuraBorda,
+        left: (pontoAtual.x),
+        top: (pontoAtual.y),
         selectable: false,
         hasBorders: false,
         hasControls: false,
@@ -196,6 +262,18 @@ export default {
         evented: false,
         objectCaching: false,
       });
+            strokeWidth: this.parametros.grosuraBorda,
+            fill: this.parametros.corPreenchimento,
+            stroke: this.parametros.corBorda,
+            class: 'line',
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            hasBorders: false,
+            hasControls: false,
+            evented: false,
+            objectCaching: false
+        });
       this.desenhando.linha = line;
       this.desenhando.linhas.push(line);
       this.canvas.add(line);
@@ -234,6 +312,22 @@ export default {
     },
 
     comecaQuadrado(event) {
+            stroke: this.parametros.corBorda,
+            strokeWidth: this.parametros.grosuraBorda,
+            fill: this.parametros.corPreenchimento,
+            opacity: this.parametros.transparenciaPreenchimento,
+            hasBorders: false,
+            hasControls: false,
+            id: this.ultimaRef,
+            selectable: false,
+            objectCaching: false,
+        });
+      this.canvas.add(polygon);
+      this.objetos.push(polygon);
+      this.mostraID();
+      this.modo=0;
+    },
+    comecaQuadrado(event){
       let pontoAtual = event.absolutePointer;
 
       //adiciona um circulo na posicao clicada
@@ -248,6 +342,11 @@ export default {
         strokeWidth: 0.5,
         left: pontoAtual.x,
         top: pontoAtual.y,
+        fill: this.parametros.corPreenchimento,
+        stroke: this.parametros.corBorda,
+        strokeWidth: this.parametros.grosuraBorda,
+        left: (pontoAtual.x),
+        top: (pontoAtual.y),
         selectable: false,
         hasBorders: false,
         hasControls: false,
@@ -266,8 +365,11 @@ export default {
         stroke: "#333333",
         strokeWidth: 0.5,
         fill: "white",
+        stroke: this.parametros.corBorda,
+        strokeWidth: this.parametros.grosuraBorda,
+        fill: this.parametros.corPreenchimento,
         id: this.ultimaRef,
-        opacity: 0.2,
+        opacity: this.parametros.transparenciaPreenchimento,
         selectable: false,
         objectCaching: false,
       });
@@ -291,6 +393,10 @@ export default {
     },
     tecladoEvent(event) {
       console.log("teclado evnet chamado", event);
+      this.mostraID();
+      this.modo = 0
+    },
+    tecladoEvent(event) {
       //ctrl + z
       if (event.ctrlKey && event.key === "z") {
         this.desfaz();
@@ -299,7 +405,6 @@ export default {
         this.cancela();
       }
     },
-
     //VERIFICAR
     inicia(image) {
       this.canvas.setBackgroundColor(
@@ -366,6 +471,16 @@ export default {
             strokeWidth: 0.5,
             left: element.x,
             top: element.y,
+      let objeto = objs[0]
+      if (objeto.type == "polygon"){
+        objeto.points.forEach((element, index) => {
+          var circle = new fabric.Circle({
+            radius: 3,
+            fill: this.parametros.corPreenchimento,
+            stroke: this.parametros.corBorda,
+            strokeWidth: this.parametros.grosuraBorda,
+            left: (element.x),
+            top: (element.y),
             hasBorders: false,
             hasControls: false,
             originX: "center",
@@ -390,6 +505,17 @@ export default {
           originY: "center",
           id: 0,
           objectCaching: false,
+          fill: this.parametros.corPreenchimento,
+          stroke: this.parametros.corBorda,
+          strokeWidth: this.parametros.grosuraBorda,
+          left: (objeto.left),
+          top: (objeto.top),
+          hasBorders: false,
+          hasControls: false,
+          originX: 'center',
+          originY: 'center',
+          id: 'i',
+          objectCaching: false
         });
         this.canvas.add(circleIni);
         this.edicaoCirculos.push(circleIni);
@@ -406,6 +532,17 @@ export default {
           originY: "center",
           id: 0,
           objectCaching: false,
+          fill: this.parametros.corPreenchimento,
+          stroke: this.parametros.corBorda,
+          strokeWidth: this.parametros.grosuraBorda,
+          left: (objeto.left + objeto.width),
+          top: (objeto.top + objeto.height),
+          hasBorders: false,
+          hasControls: false,
+          originX: 'center',
+          originY: 'center',
+          id: 'f',
+          objectCaching: false
         });
         this.canvas.add(circleFim);
         this.edicaoCirculos.push(circleFim);
@@ -426,9 +563,28 @@ export default {
       this.objetos = this.objetos.filter(function (obj) {
         return obj.id != forma;
       });
+
+      let remover = this.objetos.filter(function(obj){
+        return parseInt(obj.id) == forma;
+      });
+      this.canvas.remove(remover[0])
+      this.objetos = this.objetos.filter(function(obj){
+        return parseInt(obj.id) != forma;
+      })
+
+      let remove = this.textos.filter(function(obj){
+        return parseInt(obj.id) == forma;
+      });
+      this.canvas.remove(remove[0])
+      this.textos = this.textos.filter(function(obj){
+        return parseInt(obj.id) != forma;
+      })
     },
     showHide() {
       this.objetos.forEach((object, index) => {
+        object.visible = !object.visible;
+      });
+      this.textos.forEach((object,index) => {
         object.visible = !object.visible;
       });
       this.canvas.renderAll();
@@ -441,6 +597,16 @@ export default {
       let objeto = objs[0];
       objeto.fill = "#ffffff";
       objeto.stroke = "#333333";
+      let objeto = objs[0]
+      let textos = this.textos.filter(function(obj){
+        return obj.id == a;
+      });
+      let txt = textos[0];
+      txt.fill= 'red';
+      txt.stroke= 'red';
+      txt.visible = true;
+      objeto.fill= 'red';
+      objeto.stroke= 'red';
       objeto.visible = true;
       this.canvas.renderAll();
     },
@@ -484,6 +650,11 @@ export default {
         } else {
           this.cancela();
           this.adicionaPoligono();
+          this.adicionaPonto({x: removido.x1, y:removido.y1})
+        }
+        else{
+          this.cancela()
+          this.adicionaPoligono()
         }
       } else if (this.modo == 2) {
         this.cancela();
@@ -492,4 +663,38 @@ export default {
     },
   },
 };
+      else if (this.modo ==2 ){
+        this.cancela()
+        this.adicionaQuadrado()
+      }
+      
+    },
+    mostraID(){
+      if(this.parametros.mostraID){
+        this.objetos.forEach((obj,index) => {
+          if(obj.type == "polygon"){
+            var text = new fabric.Text(""+obj.id,{
+              left: obj.points[0].x,
+              top:obj.points[0].y,
+              id: obj.id,
+              fill: this.parametros.corBorda,
+            });
+            this.textos.push(text);
+            this.canvas.add(text);
+          }
+          else if(obj.type == "rect"){
+            var text1 = new fabric.Text(""+obj.id,{
+              left: obj.left,
+              top:obj.top,
+              id: obj.id,
+              fill: this.parametros.corBorda,
+            });
+            this.textos.push(text1);
+            this.canvas.add(text1);
+          }
+        }); 
+      }
+    },
+  }
+}
 </script>
