@@ -25,7 +25,6 @@
     <input type="checkbox" v-model="parametros.mostraID"/>
     Exibir ID
   </p>
-  <button @click="atualizar">Atualizar</button>
   
 
 </template>
@@ -48,8 +47,8 @@ export default {
         mostraID: true,
         corBorda: "#999999",
         corPreenchimento: "#ffffff",
-        grosuraBorda: 1,
-        transparenciaPreenchimento: 0.1,
+        grosuraBorda: 2,
+        transparenciaPreenchimento: 0.2,
       },
       objetos: [],
       textos: [],
@@ -170,7 +169,7 @@ export default {
         radius: 3,
         fill: this.parametros.corPreenchimento,
         stroke: this.parametros.corBorda,
-        strokeWidth: 0.5,
+        strokeWidth: this.parametros.grosuraBorda,
         left: (pontoAtual.x),
         top: (pontoAtual.y),
         selectable: false,
@@ -193,7 +192,7 @@ export default {
       //cria a linha de rastro
       var points = [(pontoAtual.x), (pontoAtual.y), (pontoAtual.x), (pontoAtual.y)];
       let line = new fabric.Line(points, {
-            strokeWidth: 2,
+            strokeWidth: this.parametros.grosuraBorda,
             fill: this.parametros.corPreenchimento,
             stroke: this.parametros.corBorda,
             class: 'line',
@@ -228,9 +227,9 @@ export default {
       this.ultimaRef++;
       var polygon = new fabric.Polygon(pontosTemp, {
             stroke: this.parametros.corBorda,
-            strokeWidth: 0.5,
+            strokeWidth: this.parametros.grosuraBorda,
             fill: this.parametros.corPreenchimento,
-            opacity: 0.2,
+            opacity: this.parametros.transparenciaPreenchimento,
             hasBorders: false,
             hasControls: false,
             id: this.ultimaRef,
@@ -254,7 +253,7 @@ export default {
         radius: 3,
         fill: this.parametros.corPreenchimento,
         stroke: this.parametros.corBorda,
-        strokeWidth: 0.5,
+        strokeWidth: this.parametros.grosuraBorda,
         left: (pontoAtual.x),
         top: (pontoAtual.y),
         selectable: false,
@@ -274,10 +273,10 @@ export default {
         left: pontoAtual.x,
         top: pontoAtual.y,
         stroke: this.parametros.corBorda,
-        strokeWidth: 0.5,
+        strokeWidth: this.parametros.grosuraBorda,
         fill: this.parametros.corPreenchimento,
         id: this.ultimaRef,
-        opacity: 0.2,
+        opacity: this.parametros.transparenciaPreenchimento,
         selectable: false,
         objectCaching: false,
       });
@@ -366,7 +365,7 @@ export default {
             radius: 3,
             fill: this.parametros.corPreenchimento,
             stroke: this.parametros.corBorda,
-            strokeWidth: 0.5,
+            strokeWidth: this.parametros.grosuraBorda,
             left: (element.x),
             top: (element.y),
             hasBorders: false,
@@ -385,7 +384,7 @@ export default {
           radius: 3,
           fill: this.parametros.corPreenchimento,
           stroke: this.parametros.corBorda,
-          strokeWidth: 0.5,
+          strokeWidth: this.parametros.grosuraBorda,
           left: (objeto.left),
           top: (objeto.top),
           hasBorders: false,
@@ -401,7 +400,7 @@ export default {
           radius: 3,
           fill: this.parametros.corPreenchimento,
           stroke: this.parametros.corBorda,
-          strokeWidth: 0.5,
+          strokeWidth: this.parametros.grosuraBorda,
           left: (objeto.left + objeto.width),
           top: (objeto.top + objeto.height),
           hasBorders: false,
