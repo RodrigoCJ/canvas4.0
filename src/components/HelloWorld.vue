@@ -1,5 +1,5 @@
 <template>
-  <canvas ref="can" width="640" height="480"></canvas>
+  <canvas ref="can" width="640" height="480" id="canvas"></canvas>
   <button @click="listaDados">Lista Objetos</button>
   <button @click="adicionaPoligono">Novo Poligono</button>
   <button @click="adicionaQuadrado">Novo Quadrado</button>
@@ -28,6 +28,8 @@ export default {
       objetos: [],
       ultimaRef: -1,
       edicaoCirculos: [],
+      imgWidth: 640,
+      imgHeight: 480,
       modo: 0, //0 - nada, 1 - segmentacao, 2 - bbox
     }
   },
@@ -40,19 +42,34 @@ export default {
     this.canvas.on('mouse:down', this.mouseDown);
     this.canvas.on('mouse:up', this.mouseUp);
     this.canvas.on('mouse:move', this.mouseMove);
-    this.inicia("https://media.discordapp.net/attachments/905770077251600396/1040329314241101904/black_640x480.png");
+    this.inicia("https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png");
+    // this.inicia("https://media.discordapp.net/attachments/947876906185924648/1040255879435526204/7007_1667849369020.jpg");
   },
   
   methods: {
-    zoomScroll(opt){
-      let delta = opt.e.deltaY;
+    zoomScroll(event){
+      let delta = event.e.deltaY *-1;
       let zoom = this.canvas.getZoom();
-      zoom *= 0.999 ** delta;
+      // zoom *= 0.999 ** delta;
+      zoom = zoom + delta/200;
       if (zoom > 15) zoom = 15;
       if (zoom < 1) zoom = 1;
-      this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
-      opt.e.preventDefault();
-      opt.e.stopPropagation();
+      this.canvas.zoomToPoint({ x: event.e.offsetX, y: event.e.offsetY }, zoom);
+      event.e.preventDefault();
+      event.e.stopPropagation();
+      var vpt = this.canvas.viewportTransform;
+      if (vpt[4] >= 0) {
+        this.canvas.viewportTransform[4] = 0;
+      } 
+      else if (vpt[4] < this.canvas.getWidth() - this.imgWidth * zoom) {
+        this.canvas.viewportTransform[4] = this.canvas.getWidth() - this.imgWidth * zoom;
+      }
+      if (vpt[5] >= 0) {
+        this.canvas.viewportTransform[5] = 0;
+      } 
+      else if (vpt[5] < this.canvas.getHeight() - this.imgHeight * zoom) {
+        this.canvas.viewportTransform[5] = this.canvas.getHeight() - this.imgHeight * zoom;
+      }
     },
     moveObject(event){
       var p = event.target;
@@ -158,8 +175,8 @@ export default {
       var polygon = new fabric.Polygon(pontosTemp, {
             stroke: '#333333',
             strokeWidth: 0.5,
-            fill: 'red',
-            opacity: 0.1,
+            fill: 'white',
+            opacity: 0.2,
             hasBorders: false,
             hasControls: false,
             id: this.ultimaRef,
@@ -205,9 +222,10 @@ export default {
         stroke: '#333333',
         strokeWidth: 0.5,
         fill: 'white',
+        id: this.ultimaRef,
         opacity: 0.2,
         selectable: false,
-            objectCaching: false,
+        objectCaching: false,
       });
 
       this.desenhando.poligono = rect;
@@ -233,6 +251,7 @@ export default {
         offsetY: 480
       }, 
       this.canvas.renderAll.bind( this.canvas));
+
     },
     //DEBUG
     listaDados(){
