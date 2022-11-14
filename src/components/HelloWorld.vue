@@ -14,25 +14,96 @@
   <input v-model="message" placeholder="id objeto" />
   <p>
     Linha
-    <input type="color" id="head" name="head" v-model="parametros.corBorda" />
-    <input v-model="parametros.grosuraBorda" placeholder="grosura borda" />
+    <input type="color" id="head" name="head" v-model="parametros.corLinha" title="Cor da linha"/>
+    <input v-model="parametros.grossuraLinha" placeholder="grosura" title="Grossura da linha"/>
+    <input v-model="parametros.transparenciaLinha" placeholder="transparencia entre 0 e 1" title="Transparencia da linha"/>
   </p>
   <p>
-    Preenchimento/Ponto
+    Preenchimento
     <input
       type="color"
       id="head"
       name="head"
       v-model="parametros.corPreenchimento"
+      title="Cor preenchimento forma"
     />
     <input
       v-model="parametros.transparenciaPreenchimento"
-      placeholder="transparencia preenchimento entre 0 e 1"
+      placeholder="transparencia entre 0 e 1"
+      title="Transparencia do preenchimento da forma"
     />
   </p>
   <p>
-    <input type="checkbox" v-model="parametros.mostraID" />
     Exibir ID
+    <input type="checkbox" v-model="parametros.mostraID" />
+    <input
+      type="color"
+      id="head"
+      name="head"
+      v-model="parametros.corTexto"
+      title="Cor do id"
+    />
+    <input
+      v-model="parametros.tamanhoTexto"
+      placeholder="tamanho Texto"
+      title="Tamnho do id"
+    />
+  </p>
+  <p>
+    Esfera
+    <input
+      type="color"
+      id="head"
+      name="head"
+      v-model="parametros.corEsfera"
+      title="Cor das esferas principais"
+    />
+    <input
+      type="color"
+      id="head"
+      name="head"
+      v-model="parametros.corEsferaInter"
+      title="Cor das esferas internas"
+    />
+    <input
+      type="color"
+      id="head"
+      name="head"
+      v-model="parametros.corEsferaInicio"
+      title="Cor da esfera de inicio"
+    />
+    <input
+      v-model="parametros.raioEsfera"
+      placeholder="raioEsfera"
+      title="Raio esfera (principal e inicio)"
+    />
+    <input
+      v-model="parametros.raioEsferaInter"
+      placeholder="raioEsferaInter"
+      title="Raio esfera interna"
+    />
+    <input
+      v-model="parametros.transparenciaEsfera"
+      placeholder="transparenciaEsfera"
+      title="Transparencia das esferas"
+    />
+  </p>
+  <p>
+    Destaque
+    <input
+      type="color"
+      id="head"
+      name="head"
+      v-model="parametros.corDestaqueForma"
+      title="Cor de destaque das formas"
+    />
+    <input
+      type="color"
+      id="head"
+      name="head"
+      v-model="parametros.corDestaqueTexto"
+      title="Cor de desataque dos textos"
+    />
   </p>
 </template>
 
@@ -45,27 +116,39 @@ export default {
       canvas: null,
       message: "0",
       desenhando: {
-        poligono: null, //objeto que esta sendo desenhado
+        objeto: null, //objeto que esta sendo desenhado
         linha: null, //linha que esta sendo desenhada atualmente
         linhas: [], //lista de linhas que foram desenhadas no canvas entre os pontos
         pontos: [], //lista circulos desenhados no canvas nos pontos em que foram clicados
       },
       parametros: {
         mostraID: true,
-        corBorda: "#999999",
-        corPreenchimento: "#ffffff",
-        grosuraBorda: 2,
+        corLinha: "#ffffff",
+        grossuraLinha: 1,
+        transparenciaLinha: 0.3,
+        corPreenchimento: "#cc3300",
         transparenciaPreenchimento: 0.2,
+        corTexto: "#b3b3b3",
+        tamanhoTexto: 12,
+        corEsfera: "#b3b3b3",
+        corEsferaInter: "#0000cc",
+        corEsferaInicio: "#ff0000",
+        raioEsfera: 3,
+        raioEsferaInter: 3,
+        transparenciaEsfera: 1,
+        corDestaqueForma: "#ffcc00",
+        corDestaqueTexto: "#ffffff",
+        modo: 0, //0 - nada, 1 - segmentacao, 2 - bbox, 3 - edicao
+        fullScreen: false,
+        width: 640,
+        height: 480,
       },
-      objetos: [],
-      textos: [],
-      ultimaRef: -1,
-      edicaoCirculos: [],
-      pontosIntermendiarios: [],
-      imgWidth: 640,
-      imgHeight: 480,
-      modo: 0, //0 - nada, 1 - segmentacao, 2 - bbox
-      full: false,
+      objetos: [],    //todos os objetos do fabric
+      textos: [],     //todos os textos do fabric
+      ultimaRef: -1,  //ultima referencia do objeto
+      edicaoCirculos: [], //lista de circulos de edicao no fabric
+      pontosIntermendiarios: [], //lista de pontos intermediarios de edicao do fabruic
+      destaque: null,   //objeto sendo destacado/editado
     };
   },
   mounted() {
@@ -77,15 +160,14 @@ export default {
     this.canvas.on("mouse:up", this.mouseUp);
     this.canvas.on("mouse:move", this.mouseMove);
     document.addEventListener("keyup", this.tecladoEvent);
-    this.inicia(
-      "https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png"
-    );
+    this.inicia("https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png");
     // this.inicia("https://media.discordapp.net/attachments/947876906185924648/1040255879435526204/7007_1667849369020.jpg");
   },
 
   methods: {
+    //PRONTO
     fullScreen() {
-      if (!this.full) {
+      if (!this.parametros.full) {
         this.canvas.setDimensions(
           {
             width: "1000px",
@@ -95,7 +177,7 @@ export default {
             cssOnly: true,
           }
         );
-        this.full = !this.full;
+        this.parametros.full = !this.parametros.full;
       } else {
         this.canvas.setDimensions(
           {
@@ -106,9 +188,11 @@ export default {
             cssOnly: true,
           }
         );
-        this.full = !this.full;
+        this.parametros.full = !this.parametros.full;
       }
     },
+
+    //PRONTO
     zoomScroll(event) {
       let delta = event.e.deltaY * -1;
       let zoom = this.canvas.getZoom();
@@ -122,61 +206,64 @@ export default {
       var vpt = this.canvas.viewportTransform;
       if (vpt[4] >= 0) {
         this.canvas.viewportTransform[4] = 0;
-      } else if (vpt[4] < this.canvas.getWidth() - this.imgWidth * zoom) {
+      } else if (vpt[4] < this.canvas.getWidth() - this.parametros.width * zoom) {
         this.canvas.viewportTransform[4] =
-          this.canvas.getWidth() - this.imgWidth * zoom;
+          this.canvas.getWidth() - this.parametros.width * zoom;
       }
       if (vpt[5] >= 0) {
         this.canvas.viewportTransform[5] = 0;
-      } else if (vpt[5] < this.canvas.getHeight() - this.imgHeight * zoom) {
+      } else if (vpt[5] < this.canvas.getHeight() - this.parametros.height * zoom) {
         this.canvas.viewportTransform[5] =
-          this.canvas.getHeight() - this.imgHeight * zoom;
+          this.canvas.getHeight() - this.parametros.height * zoom;
       }
     },
+
+    //PRONTO
     moveObject(event) {
       let a = parseInt(this.message);
       let objs = this.objetos.filter(function (obj) {
         return obj.id == a;
       });
-      let objeto = objs[0];
-      var p = event.target;
-      let b = ""+event.target.id
-      console.log("move object",b)
-      if (objeto.type == "polygon" && !b.startsWith('i')) {
-        objeto.points[p.id] = {
-          x: p.getCenterPoint().x,
-          y: p.getCenterPoint().y,
-        };
-      } else if (objeto.type == "rect") {
-        let cordIni = { x: objeto.left, y: objeto.top };
-        let cordFin = {
-          x: objeto.left + objeto.width,
-          y: objeto.top + objeto.height,
-        };
+      this.destaque = objs[0];
+      var target = event.target;
+      let targetID = ""+target.id
+    
 
-        if (p.id == "i") {
-          cordIni.x = p.getCenterPoint().x;
-          cordIni.y = p.getCenterPoint().y;
+      if (this.destaque.type == "polygon" && !targetID.startsWith('i')) {
+        this.destaque.points[target.id] = {
+          x: target.getCenterPoint().x,
+          y: target.getCenterPoint().y,
+        };
+        this.criaPontoInter();
+      } else if (this.destaque.type == "rect"){
+        let cordIni = { x: this.destaque.left, y: this.destaque.top };
+        let cordFin = { x: this.destaque.left + this.destaque.width, y: this.destaque.top + this.destaque.height };
+
+        if (targetID == "i") {
+          cordIni.x = target.getCenterPoint().x;
+          cordIni.y = target.getCenterPoint().y;
         }
-        if (p.id == "f") {
-          cordFin.x = p.getCenterPoint().x;
-          cordFin.y = p.getCenterPoint().y;
+        if (targetID == "f") {
+          cordFin.x = target.getCenterPoint().x;
+          cordFin.y = target.getCenterPoint().y;
         }
 
         //inicial
-        objeto.set({ left: cordIni.x });
-        objeto.set({ top: cordIni.y });
+        this.destaque.set({ left: cordIni.x });
+        this.destaque.set({ top: cordIni.y });
 
         //final
-        objeto.set({ width: (cordIni.x - cordFin.x) * -1 });
-        objeto.set({ height: (cordIni.y - cordFin.y) * -1 });
+        this.destaque.set({ width: (cordIni.x - cordFin.x) * -1 });
+        this.destaque.set({ height: (cordIni.y - cordFin.y) * -1 });
       }
     },
+
+    //PRONTO
     mouseMove(event) {
       if (
         this.desenhando.linha &&
         this.desenhando.linha.class == "line" &&
-        this.modo == 1
+        this.parametros.modo == 1
       ) {
         this.desenhando.linha.set({
           x2: event.absolutePointer.x,
@@ -184,7 +271,7 @@ export default {
         });
         this.canvas.renderAll();
         //desenha rastro linha
-      } else if (this.modo == 2 && this.desenhando.poligono) {
+      } else if (this.parametros.modo == 2 && this.desenhando.poligono) {
         this.desenhando.poligono.set({
           width: (this.desenhando.poligono.left - event.absolutePointer.x) * -1,
         });
@@ -194,68 +281,67 @@ export default {
         this.canvas.renderAll();
       }
     },
-    mouseDown(event) {
-      
+
+    //PRONTO
+    mouseDown(event) {     
+      let id = ""
       if(event.target){
-        console.log("mouse down, event",event.target.id)
+        id = "" + event.target.id
       }
+      
 
       if (event.target && this.desenhando.pontos.length > 0 && this.desenhando.pontos[0].id == event.target.id) {
-        this.desenhaPoligono();
-      } else if (event.target && event.target.id.startsWith('i')) {
-        let a = parseInt(this.message);
-        let objs = this.objetos.filter(function (obj) {
-          return obj.id == a;
-        });
-        let objeto = objs[0];
-        let indexf =  event.target.id.substring(1)
-        console.log("pontos do poligono,indexf",indexf)
-        console.log("pontos do poligono,prox id",indexf == objeto.points.length-1 ? 0 : parseInt(indexf)+1)
-
-
-        let atual = objeto.points[indexf]
-        let prox = objeto.points[indexf == objeto.points.length-1 ? 0 : parseInt(indexf)+1]
-
-        console.log("pontos do poligono,atual",atual)
-        console.log("pontos do poligono,prox",prox)
-
-        // let medio = { x: (parseInt(atual.x) + parseInt(prox.x))/2, y: (parseInt(atual.y) + parseInt(prox.y))/2 }
-        // console.log("pontos do poligono,medio",medio)
-        // let pontosnovos =  []
-        //   objeto.points.forEach((element, index) => {
-        //     pontosnovos.push(element)
-        //     if (index == indexf){
-        //       pontosnovos.push({x:event.absolutePointer,y:event.absolutePointer})
-        //     }
-        //   });
-           
-        //   objeto.points = pontosnovos
-        //   this.editaObjeto();
-
-        //   this.canvas.renderAll()
-      } else if (this.modo == 1) {
-        this.adicionaPonto(event.absolutePointer);
-      } else if (this.modo == 2) {
+        //fecha poligono
+        this.terminaPoligono();
+      }
+      else if (this.parametros.modo == 1) {
+        //comeca poligono, e adiciona os pontos
+        this.adicionaPontoPoligono(event.absolutePointer);
+      }
+      else if (this.parametros.modo == 2) {
+        //comeca o quadrado
         this.comecaQuadrado(event);
+      } 
+      else if (this.parametros.modo == 3 && event.target && id.startsWith('i')) {
+        let indexf =  event.target.id.substring(1)
+        let atual = this.destaque.points[indexf]
+        let prox = this.destaque.points[indexf == this.destaque.points.length-1 ? 0 : parseInt(indexf)+1]
+
+        let medio = { x: (parseInt(atual.x) + parseInt(prox.x))/2, y: (parseInt(atual.y) + parseInt(prox.y))/2 }
+
+
+        let pontosnovos =  []
+        this.destaque.points.forEach((element, index) => {
+            pontosnovos.push(element)
+            if (index == indexf){
+              pontosnovos.push({x:medio.x,y:medio.y})
+            }
+        });
+
+        this.destaque.points = pontosnovos
+
+        this.canvas.renderAll()
+        this.editaObjeto();
       }
     },
-    mouseUp(event) {
-      if (this.modo == 2) {
-        this.fechaQuadrado(event);
-      }
-    },
+
     //PRONTO
-    adicionaPonto(pontoAtual) {
+    mouseUp(event) {
+      if (this.parametros.modo == 2) {
+        this.terminaQuadrado(event);
+      }
+    },
+    
+    //PRONTO
+    adicionaPontoPoligono(pontoAtual) {
       //adiciona um circulo na posicao clicada
       //gero um id unico pro ponto
       var random = Math.floor(Math.random() * (999999 - 99 + 1)) + 99;
       var id = new Date().getTime() + random;
 
       var circle = new fabric.Circle({
-        radius: 3,
-        fill: this.parametros.corPreenchimento,
-        stroke: this.parametros.corBorda,
-        strokeWidth: this.parametros.grosuraBorda,
+        radius: this.parametros.raioEsfera,
+        fill: this.parametros.corEsfera,
         left: pontoAtual.x,
         top: pontoAtual.y,
         selectable: false,
@@ -269,7 +355,7 @@ export default {
       //verifico se e o primeiro ponto, e se for mudo a cor
       if (this.desenhando.pontos.length == 0) {
         circle.set({
-          fill: "red",
+          fill: this.parametros.corEsferaInicio,
         });
       }
       this.desenhando.pontos.push(circle);
@@ -278,9 +364,9 @@ export default {
       //cria a linha de rastro
       var points = [pontoAtual.x, pontoAtual.y, pontoAtual.x, pontoAtual.y];
       let line = new fabric.Line(points, {
-        strokeWidth: this.parametros.grosuraBorda,
-        fill: this.parametros.corPreenchimento,
-        stroke: this.parametros.corBorda,
+        strokeWidth: this.parametros.grossuraLinha,
+        fill: this.parametros.corLinha,
+        stroke: this.parametros.corLinha,
         class: "line",
         originX: "center",
         originY: "center",
@@ -294,7 +380,9 @@ export default {
       this.desenhando.linhas.push(line);
       this.canvas.add(line);
     },
-    desenhaPoligono() {
+
+    //PRONTO
+    terminaPoligono() {
       var pontosTemp = [];
 
       //pego uma lista de coordenadas dos pontos, e apago os circulos
@@ -309,11 +397,10 @@ export default {
       this.desenhando.linhas.forEach((linha, index) => {
         this.canvas.remove(linha);
       });
+
       //desenho o poligo final
       this.ultimaRef++;
       var polygon = new fabric.Polygon(pontosTemp, {
-        stroke: this.parametros.corBorda,
-        strokeWidth: this.parametros.grosuraBorda,
         fill: this.parametros.corPreenchimento,
         opacity: this.parametros.transparenciaPreenchimento,
         hasBorders: false,
@@ -325,8 +412,10 @@ export default {
       this.canvas.add(polygon);
       this.objetos.push(polygon);
       this.mostraID();
-      this.modo = 0;
+      this.parametros.modo = 0;
     },
+
+    //PRONTO
     comecaQuadrado(event) {
       let pontoAtual = event.absolutePointer;
 
@@ -336,10 +425,8 @@ export default {
       var id = new Date().getTime() + random;
 
       var circle = new fabric.Circle({
-        radius: 3,
-        fill: this.parametros.corPreenchimento,
-        stroke: this.parametros.corBorda,
-        strokeWidth: this.parametros.grosuraBorda,
+        radius: this.parametros.raioEsfera,
+        fill: this.parametros.corEsferaInicio,
         left: pontoAtual.x,
         top: pontoAtual.y,
         selectable: false,
@@ -357,8 +444,6 @@ export default {
       var rect = new fabric.Rect({
         left: pontoAtual.x,
         top: pontoAtual.y,
-        stroke: this.parametros.corBorda,
-        strokeWidth: this.parametros.grosuraBorda,
         fill: this.parametros.corPreenchimento,
         id: this.ultimaRef,
         opacity: this.parametros.transparenciaPreenchimento,
@@ -369,7 +454,9 @@ export default {
       this.desenhando.poligono = rect;
       this.canvas.add(rect);
     },
-    fechaQuadrado(event) {
+
+    //PRONTO
+    terminaQuadrado(event) {
       let pontoAtual = event.absolutePointer;
       this.desenhando.poligono.set({
         width: (this.desenhando.poligono.left - pontoAtual.x) * -1,
@@ -381,83 +468,23 @@ export default {
       this.canvas.remove(this.desenhando.pontos[0]);
       this.objetos.push(this.desenhando.poligono);
       this.mostraID();
-      this.modo = 0;
+      this.parametros.modo = 0;
     },
-    tecladoEvent(event) {
-      //ctrl + z
-      if (event.ctrlKey && event.key === "z") {
-        this.desfaz();
-      }
-      if (event.keyCode === 27) {
-        this.cancela();
-      }
-    },
-    //VERIFICAR
-    inicia(image) {
-      this.canvas.setBackgroundColor(
-        {
-          source: image,
-          offsetX: 640,
-          offsetY: 480,
-        },
-        this.canvas.renderAll.bind(this.canvas)
-      );
-    },
-    //DEBUG
-    listaDados() {
-      this.canvas.setZoom(1);
-      console.log("lista poligonos", this.objetos);
-      console.log("ultimaRef", this.ultimaRef);
-      console.log("zoom", this.canvas.getZoom());
-      var vpt = this.canvas.viewportTransform;
-      if (vpt[4] >= 0) {
-        this.canvas.viewportTransform[4] = 0;
-      } else if (vpt[4] < this.canvas.getWidth() - this.imgWidth * 1) {
-        this.canvas.viewportTransform[4] =
-          this.canvas.getWidth() - this.imgWidth * 1;
-      }
-      if (vpt[5] >= 0) {
-        this.canvas.viewportTransform[5] = 0;
-      } else if (vpt[5] < this.canvas.getHeight() - this.imgHeight * 1) {
-        this.canvas.viewportTransform[5] =
-          this.canvas.getHeight() - this.imgHeight * 1;
-      }
-    },
-    adicionaPoligono() {
-      this.desenhando = {
-        poligono: null,
-        linha: null,
-        linhas: [],
-        pontos: [],
-      };
-      this.modo = 1;
-    },
-    adicionaQuadrado() {
-      this.desenhando = {
-        poligono: null,
-        linha: null,
-        linhas: [],
-        pontos: [],
-      };
-      this.modo = 2;
-    },
+
+    //PRONTO
     editaObjeto() {
-      this.edicaoCirculos.forEach((point, index) => {
-        this.canvas.remove(point);
-      });
-      this.edicaoCirculos = [];
+      this.paraEdicao();
+      this.parametros.modo = 3
       let a = parseInt(this.message);
       let objs = this.objetos.filter(function (obj) {
         return obj.id == a;
       });
-      let objeto = objs[0];
-      if (objeto.type == "polygon") {
-        objeto.points.forEach((element, index) => {
+      this.destaque = objs[0];
+      if (this.destaque.type == "polygon") {
+        this.destaque.points.forEach((element, index) => {
           var circle = new fabric.Circle({
-            radius: 3,
-            fill: this.parametros.corPreenchimento,
-            stroke: this.parametros.corBorda,
-            strokeWidth: this.parametros.grosuraBorda,
+            radius: this.parametros.raioEsfera,
+            fill: this.parametros.corEsfera,
             left: element.x,
             top: element.y,
             hasBorders: false,
@@ -467,21 +494,24 @@ export default {
             id: index,
             objectCaching: false,
           });
+          if (this.edicaoCirculos.length == 0) {
+            circle.set({
+              fill: this.parametros.corEsferaInicio,
+            });
+          }
+
           this.canvas.add(circle);
           this.edicaoCirculos.push(circle);
-
-          this.criaPontoInter(objeto);
-        
         });
+        this.criaPontoInter();
       } 
-      else if (objeto.type == "rect") {
+      
+      else if (this.destaque.type == "rect") {
         var circleIni = new fabric.Circle({
-          radius: 3,
-          fill: this.parametros.corPreenchimento,
-          stroke: this.parametros.corBorda,
-          strokeWidth: this.parametros.grosuraBorda,
-          left: objeto.left,
-          top: objeto.top,
+          radius: this.parametros.raioEsfera,
+          fill: this.parametros.corEsferaInicio,
+          left: this.destaque.left,
+          top: this.destaque.top,
           hasBorders: false,
           hasControls: false,
           originX: "center",
@@ -492,12 +522,10 @@ export default {
         this.canvas.add(circleIni);
         this.edicaoCirculos.push(circleIni);
         var circleFim = new fabric.Circle({
-          radius: 3,
-          fill: this.parametros.corPreenchimento,
-          stroke: this.parametros.corBorda,
-          strokeWidth: this.parametros.grosuraBorda,
-          left: objeto.left + objeto.width,
-          top: objeto.top + objeto.height,
+          radius: this.parametros.raioEsfera,
+          fill:  this.parametros.corEsfera,
+          left: this.destaque.left + this.destaque.width,
+          top: this.destaque.top + this.destaque.height,
           hasBorders: false,
           hasControls: false,
           originX: "center",
@@ -509,37 +537,84 @@ export default {
         this.edicaoCirculos.push(circleFim);
       }
     },
-    criaPontoInter(objeto){
-      if (objeto.type == "polygon") {
+
+    //PRONTO
+    tecladoEvent(event) {
+      //ctrl + z
+      if (event.ctrlKey && event.key === "z") {
+        this.desfaz();
+      }
+      if (event.keyCode === 27) {
+        this.cancela();
+      }
+    },
+
+    //VERIFICAR
+    inicia(image) {
+      this.canvas.setBackgroundColor(
+        {
+          source: image,
+          offsetX: 640,
+          offsetY: 480,
+        },
+        this.canvas.renderAll.bind(this.canvas)
+      );
+    },
+
+    //PRONTO
+    adicionaPoligono() {
+      this.desenhando = {
+        objeto: null,
+        linha: null,
+        linhas: [],
+        pontos: [],
+      };
+      this.parametros.modo = 1;
+    },
+
+    //PRONTO
+    adicionaQuadrado() {
+      this.desenhando = {
+        objeto: null,
+        linha: null,
+        linhas: [],
+        pontos: [],
+      };
+      this.parametros.modo = 2;
+    },
+
+    //PRONTO
+    criaPontoInter(){
+      if (this.destaque.type == "polygon") {
         this.pontosIntermendiarios.forEach((element, index) => {
           this.canvas.remove(element);
         });
         this.pontosIntermendiarios = [];
-        objeto.points.forEach((element, index) => {
-          let atual = objeto.points[index]
-          let prox = objeto.points[index == objeto.points.length-1 ? 0 : parseInt(index)+1]
+        this.destaque.points.forEach((element, index) => {
+          let atual = this.destaque.points[index]
+          let prox = this.destaque.points[index == this.destaque.points.length-1 ? 0 : parseInt(index)+1]
           let medio = { x: (parseInt(atual.x) + parseInt(prox.x))/2, y: (parseInt(atual.y) + parseInt(prox.y))/2 }
           var circle = new fabric.Circle({
-            radius: 3,
-            fill: 'blue',
-            stroke: 'blue',
-            strokeWidth: 3,
+            radius: this.parametros.raioEsferaInter,
+            fill: this.parametros.corEsferaInter,
             left: medio.x,
             top: medio.y,
             hasBorders: false,
             hasControls: false,
             originX: "center",
             originY: "center",
+            lockMovementX: false,
+            lockMovementY:false,
             id: 'i'+index,
             objectCaching: false,
           });
           this.canvas.add(circle);
           this.pontosIntermendiarios.push(circle);
-
         });
       }
     },
 
+    //PRONTO
     paraEdicao() {
       this.edicaoCirculos.forEach((point, index) => {
         this.canvas.remove(point);
@@ -549,7 +624,10 @@ export default {
         this.canvas.remove(point);
       });
       this.pontosIntermendiarios = [];
+      this.parametros.modo = 0;
     },
+
+    //PRONTO
     apaga() {
       let forma = parseInt(this.message);
 
@@ -569,6 +647,8 @@ export default {
         return parseInt(obj.id) != forma;
       });
     },
+
+    //PRONTO
     showHide() {
       this.objetos.forEach((object, index) => {
         object.visible = !object.visible;
@@ -578,6 +658,8 @@ export default {
       });
       this.canvas.renderAll();
     },
+
+    //PRONTO
     destaca() {
       let a = parseInt(this.message);
       let objs = this.objetos.filter(function (obj) {
@@ -588,16 +670,18 @@ export default {
         return obj.id == a;
       });
       let txt = textos[0];
-      txt.fill = "red";
-      txt.stroke = "red";
+      txt.fill = this.parametros.corDestaqueTexto;
+      txt.stroke = this.parametros.corDestaqueTexto;
       txt.visible = true;
-      objeto.fill = "red";
-      objeto.stroke = "red";
+      objeto.fill = this.parametros.corDestaqueForma;
+      objeto.stroke = this.parametros.corDestaqueForma;
       objeto.visible = true;
       this.canvas.renderAll();
     },
+
+    //PRONTO
     cancela() {
-      if (this.modo != 0) {
+      if (this.parametros.modo != 0) {
         this.desenhando.pontos.forEach((point, index) => {
           this.canvas.remove(point);
         });
@@ -606,11 +690,16 @@ export default {
           this.canvas.remove(linha);
         });
         this.canvas.remove(this.desenhando.poligono);
+        if (this.parametros.modo == 3){
+          this.paraEdicao();
+        }
         this.modo = 0;
       }
     },
+
+    //PRONTO
     desfaz() {
-      if (this.modo == 1) {
+      if (this.parametros.modo == 1) {
         if (this.desenhando.pontos.length > 1) {
           //apago o ultimo ponto
           this.canvas.remove(
@@ -635,11 +724,13 @@ export default {
           this.cancela();
           this.adicionaPoligono();
         }
-      } else if (this.modo == 2) {
+      } else if (this.parametros.modo == 2) {
         this.cancela();
         this.adicionaQuadrado();
       }
     },
+
+    //PRONTO
     mostraID() {
       if (this.parametros.mostraID) {
         this.objetos.forEach((obj, index) => {
@@ -648,7 +739,7 @@ export default {
               left: obj.points[0].x,
               top: obj.points[0].y,
               id: obj.id,
-              fill: this.parametros.corBorda,
+              fill: this.parametros.corTexto,
             });
             this.textos.push(text);
             this.canvas.add(text);
@@ -657,12 +748,34 @@ export default {
               left: obj.left,
               top: obj.top,
               id: obj.id,
-              fill: this.parametros.corBorda,
+              fill: this.parametros.corTexto,
             });
             this.textos.push(text1);
             this.canvas.add(text1);
           }
         });
+      }
+    },
+
+    //DEBUG
+    //PRONTO
+    listaDados() {
+      this.canvas.setZoom(1);
+      console.log("lista poligonos", this.objetos);
+      console.log("ultimaRef", this.ultimaRef);
+      console.log("zoom", this.canvas.getZoom());
+      var vpt = this.canvas.viewportTransform;
+      if (vpt[4] >= 0) {
+        this.canvas.viewportTransform[4] = 0;
+      } else if (vpt[4] < this.canvas.getWidth() - this.parametros.width * 1) {
+        this.canvas.viewportTransform[4] =
+          this.canvas.getWidth() - this.parametros.width * 1;
+      }
+      if (vpt[5] >= 0) {
+        this.canvas.viewportTransform[5] = 0;
+      } else if (vpt[5] < this.canvas.getHeight() - this.parametros.height * 1) {
+        this.canvas.viewportTransform[5] =
+          this.canvas.getHeight() - this.parametros.height * 1;
       }
     },
   },
