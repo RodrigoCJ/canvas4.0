@@ -149,6 +149,12 @@ export default {
       edicaoCirculos: [], //lista de circulos de edicao no fabric
       pontosIntermendiarios: [], //lista de pontos intermediarios de edicao do fabruic
       destaque: null,   //objeto sendo destacado/editado
+      panning: {
+        enabled: false,
+        moving: false,
+        lastX: 0,
+        lastY: 0,
+      },
     };
   },
   mounted() {
@@ -159,7 +165,8 @@ export default {
     this.canvas.on("mouse:down", this.mouseDown);
     this.canvas.on("mouse:up", this.mouseUp);
     this.canvas.on("mouse:move", this.mouseMove);
-    document.addEventListener("keyup", this.tecladoEvent);
+    document.addEventListener("keyup", this.tecladoEventUp);
+    document.addEventListener("keydown", this.tecladoEventDown);
     this.inicia("https://media.discordapp.net/attachments/905770077251600396/1040581886331863060/black_640x480.png");
     // this.inicia("https://media.discordapp.net/attachments/947876906185924648/1040255879435526204/7007_1667849369020.jpg");
   },
@@ -203,6 +210,11 @@ export default {
       this.canvas.zoomToPoint({ x: event.e.offsetX, y: event.e.offsetY }, zoom);
       event.e.preventDefault();
       event.e.stopPropagation();
+      this.corrigeFoco(zoom);
+    },
+
+    //PRONTO
+    corrigeFoco(zoom){
       var vpt = this.canvas.viewportTransform;
       if (vpt[4] >= 0) {
         this.canvas.viewportTransform[4] = 0;
@@ -260,6 +272,13 @@ export default {
 
     //PRONTO
     mouseMove(event) {
+      if(this.panning.enabled && event && event.e &&  this.panning.move){
+        let delta =new fabric.Point(event.e.movementX, event.e.movementY);
+        this.canvas.relativePan(delta);
+        this.corrigeFoco(this.canvas.getZoom());
+      }
+
+
       if (
         this.desenhando.linha &&
         this.desenhando.linha.class == "line" &&
@@ -285,6 +304,12 @@ export default {
     //PRONTO
     mouseDown(event) {     
       let id = ""
+
+      this.panning.lastX = event.e.clientX
+      this.panning.lastY = event.e.lastY
+      this.panning.move = true
+
+
       if(event.target){
         id = "" + event.target.id
       }
@@ -327,6 +352,8 @@ export default {
 
     //PRONTO
     mouseUp(event) {
+      this.panning.move = false
+
       if (this.parametros.modo == 2) {
         this.terminaQuadrado(event);
       }
@@ -539,13 +566,26 @@ export default {
     },
 
     //PRONTO
-    tecladoEvent(event) {
+    tecladoEventUp(event) {
       //ctrl + z
       if (event.ctrlKey && event.key === "z") {
         this.desfaz();
       }
       if (event.keyCode === 27) {
         this.cancela();
+      }
+      if(event.keyCode === 16){
+        console.log("desativa pan")
+        this.panning.enabled = false
+        this.canvas.defaultCursor = 'default';
+      }
+    },
+
+    tecladoEventDown(event) {
+      if(event.keyCode === 16){
+        console.log("ativa pan")
+        this.panning.enabled = true
+        this.canvas.defaultCursor = 'move';
       }
     },
 
@@ -764,19 +804,7 @@ export default {
       console.log("lista poligonos", this.objetos);
       console.log("ultimaRef", this.ultimaRef);
       console.log("zoom", this.canvas.getZoom());
-      var vpt = this.canvas.viewportTransform;
-      if (vpt[4] >= 0) {
-        this.canvas.viewportTransform[4] = 0;
-      } else if (vpt[4] < this.canvas.getWidth() - this.parametros.width * 1) {
-        this.canvas.viewportTransform[4] =
-          this.canvas.getWidth() - this.parametros.width * 1;
-      }
-      if (vpt[5] >= 0) {
-        this.canvas.viewportTransform[5] = 0;
-      } else if (vpt[5] < this.canvas.getHeight() - this.parametros.height * 1) {
-        this.canvas.viewportTransform[5] =
-          this.canvas.getHeight() - this.parametros.height * 1;
-      }
+      this.corrigeFoco(1);
     },
   },
 };
