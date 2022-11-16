@@ -11,6 +11,7 @@
   <button @click="cancela">Cancela</button>
   <button @click="desfaz">Desfaz</button>
   <button @click="fullScreen">FullScreen</button>
+  <button @click="atualiza">Atualiza</button>
   <input v-model="message" placeholder="id objeto" />
   <p>
     Linha
@@ -251,7 +252,7 @@ export default {
         let cordIni = { x: this.destaque.left, y: this.destaque.top };
         let cordFin = { x: this.destaque.left + this.destaque.width, y: this.destaque.top + this.destaque.height };
 
-        if (targetID == "i") {
+        if (targetID == "s") {
           cordIni.x = target.getCenterPoint().x;
           cordIni.y = target.getCenterPoint().y;
         }
@@ -548,7 +549,7 @@ export default {
           hasControls: false,
           originX: "center",
           originY: "center",
-          id: "i",
+          id: "s",
           objectCaching: false,
         });
         this.canvas.add(circleIni);
@@ -581,7 +582,6 @@ export default {
         this.cancela();
       }
       if(event.keyCode === 16){
-        console.log("desativa pan")
         this.panning.enabled = false
         this.canvas.defaultCursor = 'default';
       }
@@ -589,7 +589,6 @@ export default {
 
     tecladoEventDown(event) {
       if(event.keyCode === 16){
-        console.log("ativa pan")
         this.panning.enabled = true
         this.canvas.defaultCursor = 'move';
       }
@@ -802,6 +801,12 @@ export default {
           }
         });
       }
+    },
+
+    atualiza() {
+      this.objetos.forEach(element => {
+        console.log(element.type)
+      });
     },
 
     //DEBUG
