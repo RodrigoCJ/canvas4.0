@@ -766,7 +766,7 @@ export default {
             this.desenhando.linhas[this.desenhando.linhas.length - 1]
           );
           let removido = this.desenhando.linhas.pop();
-          this.adicionaPonto({ x: removido.x1, y: removido.y1 });
+          this.adicionaPontoPoligono({ x: removido.x1, y: removido.y1 });
         } else {
           this.cancela();
           this.adicionaPoligono();
