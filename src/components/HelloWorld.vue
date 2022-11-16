@@ -242,7 +242,7 @@ export default {
       let targetID = ""+target.id
     
 
-      if (this.destaque.type == "polygon" && !targetID.startsWith('i')) {
+      if (this.destaque.type == "polygon" && !targetID.startsWith('i'))  {
         this.destaque.points[target.id] = {
           x: target.getCenterPoint().x,
           y: target.getCenterPoint().y,
@@ -316,19 +316,19 @@ export default {
       }
       
 
-      if (event.target && this.desenhando.pontos.length > 0 && this.desenhando.pontos[0].id == event.target.id) {
+      if (event.target && this.desenhando.pontos.length > 0 && this.desenhando.pontos[0].id == event.target.id  && !this.panning.enabled) {
         //fecha poligono
         this.terminaPoligono();
       }
-      else if (this.parametros.modo == 1) {
+      else if (this.parametros.modo == 1 && !this.panning.enabled) {
         //comeca poligono, e adiciona os pontos
         this.adicionaPontoPoligono(event.absolutePointer);
       }
-      else if (this.parametros.modo == 2) {
+      else if (this.parametros.modo == 2 && !this.panning.enabled) {
         //comeca o quadrado
         this.comecaQuadrado(event);
       } 
-      else if (this.parametros.modo == 3 && event.target && id.startsWith('i')) {
+      else if (this.parametros.modo == 3 && event.target && id.startsWith('i') && !this.panning.enabled) {
         let indexf =  event.target.id.substring(1)
         let atual = this.destaque.points[indexf]
         let prox = this.destaque.points[indexf == this.destaque.points.length-1 ? 0 : parseInt(indexf)+1]
@@ -739,7 +739,7 @@ export default {
         if (this.parametros.modo == 3){
           this.paraEdicao();
         }
-        this.modo = 0;
+        this.parametros.modo = 0;
       }
     },
 
@@ -785,6 +785,8 @@ export default {
               left: obj.points[0].x,
               top: obj.points[0].y,
               id: obj.id,
+              objectCaching: false,
+              selectable: false,
               fill: this.parametros.corTexto,
             });
             this.textos.push(text);
@@ -794,6 +796,8 @@ export default {
               left: obj.left,
               top: obj.top,
               id: obj.id,
+              objectCaching: false,
+              selectable: false,
               fill: this.parametros.corTexto,
             });
             this.textos.push(text1);
@@ -805,6 +809,15 @@ export default {
 
     atualiza() {
       this.objetos.forEach(element => {
+        console.log(element.type)
+        if(element.type == "rect"){
+          console.log(element.type)
+        }
+        else if(element.type == "polygon"){
+          element.fill= this.parametros.corPreenchimento,
+          element.element=  this.parametros.transparenciaPreenchimento,
+          console.log(element.type)
+        }
         console.log(element.type)
       });
     },
