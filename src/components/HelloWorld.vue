@@ -369,6 +369,7 @@ export default {
       var circle = new fabric.Circle({
         radius: this.parametros.raioEsfera,
         fill: this.parametros.corEsfera,
+        opacity: this.parametros.transparenciaEsfera,
         left: pontoAtual.x,
         top: pontoAtual.y,
         selectable: false,
@@ -394,6 +395,7 @@ export default {
         strokeWidth: this.parametros.grossuraLinha,
         fill: this.parametros.corLinha,
         stroke: this.parametros.corLinha,
+        opacity: this.parametros.transparenciaLinha,
         class: "line",
         originX: "center",
         originY: "center",
@@ -454,6 +456,7 @@ export default {
       var circle = new fabric.Circle({
         radius: this.parametros.raioEsfera,
         fill: this.parametros.corEsferaInicio,
+        opacity: this.parametros.transparenciaEsfera,
         left: pontoAtual.x,
         top: pontoAtual.y,
         selectable: false,
@@ -512,6 +515,7 @@ export default {
           var circle = new fabric.Circle({
             radius: this.parametros.raioEsfera,
             fill: this.parametros.corEsfera,
+            opacity: this.parametros.transparenciaEsfera,
             left: element.x,
             top: element.y,
             hasBorders: false,
@@ -537,6 +541,7 @@ export default {
         var circleIni = new fabric.Circle({
           radius: this.parametros.raioEsfera,
           fill: this.parametros.corEsferaInicio,
+          opacity: this.parametros.transparenciaEsfera,
           left: this.destaque.left,
           top: this.destaque.top,
           hasBorders: false,
@@ -551,6 +556,7 @@ export default {
         var circleFim = new fabric.Circle({
           radius: this.parametros.raioEsfera,
           fill:  this.parametros.corEsfera,
+          opacity: this.parametros.transparenciaEsfera,
           left: this.destaque.left + this.destaque.width,
           top: this.destaque.top + this.destaque.height,
           hasBorders: false,
@@ -637,6 +643,7 @@ export default {
           var circle = new fabric.Circle({
             radius: this.parametros.raioEsferaInter,
             fill: this.parametros.corEsferaInter,
+            opacity: this.parametros.transparenciaEsfera,
             left: medio.x,
             top: medio.y,
             hasBorders: false,
