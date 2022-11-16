@@ -677,6 +677,10 @@ export default {
     apaga() {
       let forma = parseInt(this.message);
 
+      if(forma == this.destaque.id){
+        this.cancela();
+      }
+
       let remover = this.objetos.filter(function (obj) {
         return parseInt(obj.id) == forma;
       });
