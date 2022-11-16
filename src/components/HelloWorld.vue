@@ -248,6 +248,7 @@ export default {
           y: target.getCenterPoint().y,
         };
         this.criaPontoInter();
+        this.mostraID();
       } else if (this.destaque.type == "rect"){
         let cordIni = { x: this.destaque.left, y: this.destaque.top };
         let cordFin = { x: this.destaque.left + this.destaque.width, y: this.destaque.top + this.destaque.height };
@@ -268,6 +269,7 @@ export default {
         //final
         this.destaque.set({ width: (cordIni.x - cordFin.x) * -1 });
         this.destaque.set({ height: (cordIni.y - cordFin.y) * -1 });
+        this.mostraID();
       }
     },
 
@@ -716,16 +718,19 @@ export default {
         return obj.id == a;
       });
       let objeto = objs[0];
-      let textos = this.textos.filter(function (obj) {
-        return obj.id == a;
-      });
-      let txt = textos[0];
-      txt.fill = this.parametros.corDestaqueTexto;
-      txt.stroke = this.parametros.corDestaqueTexto;
-      txt.visible = true;
       objeto.fill = this.parametros.corDestaqueForma;
       objeto.stroke = this.parametros.corDestaqueForma;
       objeto.visible = true;
+
+      let textos = this.textos.filter(function (obj) {
+        console.log("texto ids destaca",obj.id)
+        return obj.id == a;
+      });
+      let txt = textos[0];
+      console.log("destascando texty",txt.id)
+      txt.fill = this.parametros.corDestaqueTexto;
+      txt.visible = true;
+      
       this.canvas.renderAll();
     },
 
@@ -782,6 +787,11 @@ export default {
 
     //PRONTO
     mostraID() {
+      this.textos.forEach(element => {
+        this.canvas.remove(element)
+      });
+      this.textos = []
+
       if (this.parametros.mostraID) {
         this.objetos.forEach((obj, index) => {
           if (obj.type == "polygon") {
@@ -813,17 +823,28 @@ export default {
 
     atualiza() {
       this.objetos.forEach(element => {
-        console.log(element.type)
-        if(element.type == "rect"){
-          console.log(element.type)
+        if(element.type == "rect" || element.type == "polygon"){
+          element.fill= this.parametros.corPreenchimento;
+          element.opacity= this.parametros.transparenciaPreenchimento;
         }
-        else if(element.type == "polygon"){
-          element.fill= this.parametros.corPreenchimento,
-          element.element=  this.parametros.transparenciaPreenchimento,
-          console.log(element.type)
-        }
-        console.log(element.type)
       });
+      this.edicaoCirculos.forEach((element, index) => {
+        if(element.type == "circle" ){
+          element.radius= this.parametros.raioEsfera;
+          element.fill= index == 0 ? this.parametros.corEsferaInicio : this.parametros.corEsfera;
+          element.opacity= this.parametros.transparenciaEsfera;
+        }
+      });
+      this.pontosIntermendiarios.forEach((element, index) => {
+        if(element.type == "circle" ){
+          element.radius= this.parametros.raioEsferaInter;
+          element.fill= this.parametros.corEsferaInter ;
+          element.opacity= this.parametros.transparenciaEsfera;
+        }
+      });
+      this.destaca();
+      // this.canvas.renderAll();
+      this.mostraID();
     },
 
     //DEBUG
