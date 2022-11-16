@@ -717,21 +717,23 @@ export default {
       let objs = this.objetos.filter(function (obj) {
         return obj.id == a;
       });
-      let objeto = objs[0];
-      objeto.fill = this.parametros.corDestaqueForma;
-      objeto.stroke = this.parametros.corDestaqueForma;
-      objeto.visible = true;
+      if (objs.length > 0){
+        let objeto = objs[0];
+        objeto.fill = this.parametros.corDestaqueForma;
+        objeto.stroke = this.parametros.corDestaqueForma;
+        objeto.visible = true;
 
-      let textos = this.textos.filter(function (obj) {
-        console.log("texto ids destaca",obj.id)
-        return obj.id == a;
-      });
-      let txt = textos[0];
-      console.log("destascando texty",txt.id)
-      txt.fill = this.parametros.corDestaqueTexto;
-      txt.visible = true;
-      
-      this.canvas.renderAll();
+        let textos = this.textos.filter(function (obj) {
+          console.log("texto ids destaca",obj.id)
+          return obj.id == a;
+        });
+        let txt = textos[0];
+        console.log("destascando texty",txt.id)
+        txt.fill = this.parametros.corDestaqueTexto;
+        txt.visible = true;
+
+        this.canvas.renderAll();
+      }
     },
 
     //PRONTO
@@ -835,15 +837,40 @@ export default {
           element.opacity= this.parametros.transparenciaEsfera;
         }
       });
-      this.pontosIntermendiarios.forEach((element, index) => {
+      this.pontosIntermendiarios.forEach(element => {
         if(element.type == "circle" ){
           element.radius= this.parametros.raioEsferaInter;
           element.fill= this.parametros.corEsferaInter ;
           element.opacity= this.parametros.transparenciaEsfera;
         }
       });
+      if( this.desenhando.objeto && (this.desenhando.objeto.type == "rect" || this.desenhando.objeto.type == "polygon")){
+        this.desenhando.objeto.fill= this.parametros.corPreenchimento;
+        this.desenhando.objeto.opacity= this.parametros.transparenciaPreenchimento;
+      }
+      if(this.desenhando.linha.type == "line" ){
+        this.desenhando.linha.strokeWidth= this.parametros.grossuraLinha;
+        this.desenhando.linha.fill= this.parametros.corLinha;
+        this.desenhando.linha.stroke= this.parametros.corLinha;
+        this.desenhando.linha.opacity= this.parametros.transparenciaLinha;
+      }
+      this.desenhando.linhas.forEach(element => {
+        if(element.type == "line" ){
+          element.strokeWidth= this.parametros.grossuraLinha;
+          element.fill= this.parametros.corLinha;
+          element.stroke= this.parametros.corLinha;
+          element.opacity= this.parametros.transparenciaLinha;
+        }
+      });
+      this.desenhando.pontos.forEach((element, index) => {
+        if(element.type == "circle" ){
+          element.radius= this.parametros.raioEsfera;
+          element.fill= index == 0 ? this.parametros.corEsferaInicio : this.parametros.corEsfera;
+          element.opacity= this.parametros.transparenciaEsfera;
+        }
+      });
       this.destaca();
-      // this.canvas.renderAll();
+      this.canvas.renderAll();
       this.mostraID();
     },
 
